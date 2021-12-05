@@ -299,6 +299,7 @@ void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool 
 	state->OMSetRTVFormat(RT_COLOR, Format::R16G16B16A16_FLOAT);
 	state->OMSetRTVFormat(RT_VELOCITY, Format::R16G16_FLOAT);
 	state->OMSetDSVFormat(Format::D24_UNORM_S8_UINT);
+	pCommandList->DSSetState(Graphics::DEFAULT_LESS);
 
 	// Set render targets
 	EZ::ResourceView rtvs[] =

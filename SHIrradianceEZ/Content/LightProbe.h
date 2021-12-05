@@ -16,7 +16,7 @@ public:
 	bool Init(XUSG::CommandList* pCommandList, uint32_t width, uint32_t height,
 		const XUSG::DescriptorTableCache::sptr& descriptorTableCache,
 		std::vector<XUSG::Resource::uptr>& uploaders, const std::wstring pFileNames[],
-		uint32_t numFiles, bool typedUAV);
+		uint32_t numFiles);
 
 	void UpdateFrame(double time, uint8_t frameIndex);
 	void Process(const XUSG::CommandList* pCommandList, uint8_t frameIndex);
@@ -48,7 +48,7 @@ protected:
 	};
 
 	bool createPipelineLayouts();
-	bool createPipelines(XUSG::Format rtFormat, bool typedUAV);
+	bool createPipelines(XUSG::Format rtFormat);
 	bool createDescriptorTables();
 
 	void generateRadianceGraphics(const XUSG::CommandList* pCommandList, uint8_t frameIndex);

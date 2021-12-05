@@ -26,8 +26,7 @@ LightProbeEZ::~LightProbeEZ()
 }
 
 bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t height,
-	vector<Resource::uptr>& uploaders, const wstring pFileNames[], uint32_t numFiles,
-	bool typedUAV)
+	vector<Resource::uptr>& uploaders, const wstring pFileNames[], uint32_t numFiles)
 {
 	// Load input image
 	auto texWidth = 1u, texHeight = 1u;

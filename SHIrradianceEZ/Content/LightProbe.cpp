@@ -30,7 +30,7 @@ LightProbe::~LightProbe()
 
 bool LightProbe::Init(CommandList* pCommandList, uint32_t width, uint32_t height,
 	const DescriptorTableCache::sptr& descriptorTableCache, vector<Resource::uptr>& uploaders,
-	const wstring pFileNames[], uint32_t numFiles, bool typedUAV)
+	const wstring pFileNames[], uint32_t numFiles)
 {
 	m_descriptorTableCache = descriptorTableCache;
 
@@ -85,7 +85,7 @@ bool LightProbe::Init(CommandList* pCommandList, uint32_t width, uint32_t height
 		nullptr, MemoryType::UPLOAD, MemoryFlag::NONE, L"CBPerFrame"), false);
 
 	N_RETURN(createPipelineLayouts(), false);
-	N_RETURN(createPipelines(format, typedUAV), false);
+	N_RETURN(createPipelines(format), false);
 	N_RETURN(createDescriptorTables(), false);
 
 	return true;
@@ -195,7 +195,7 @@ bool LightProbe::createPipelineLayouts()
 	return true;
 }
 
-bool LightProbe::createPipelines(Format rtFormat, bool typedUAV)
+bool LightProbe::createPipelines(Format rtFormat)
 {
 	auto vsIndex = 0u;
 	auto psIndex = 0u;

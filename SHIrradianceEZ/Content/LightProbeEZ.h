@@ -15,7 +15,7 @@ public:
 
 	bool Init(XUSG::CommandList* pCommandList, uint32_t width, uint32_t height,
 		std::vector<XUSG::Resource::uptr>& uploaders, const std::wstring pFileNames[],
-		uint32_t numFiles, bool typedUAV);
+		uint32_t numFiles);
 
 	void UpdateFrame(double time, uint8_t frameIndex);
 	void Process(XUSG::EZ::CommandList* pCommandList, uint8_t frameIndex);

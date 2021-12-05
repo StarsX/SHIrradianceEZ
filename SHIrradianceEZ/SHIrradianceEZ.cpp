@@ -20,9 +20,9 @@ const float g_zFar = 1000.0f;
 
 SHIrradianceEZ::SHIrradianceEZ(uint32_t width, uint32_t height, wstring name) :
 	DXFramework(width, height, name),
-	m_typedUAV(false),
 	m_frameIndex(0),
 	m_glossy(1.0f),
+	m_useEZ(true),
 	m_showFPS(true),
 	m_isPaused(true),
 	m_tracking(false),
@@ -102,23 +102,6 @@ void SHIrradianceEZ::LoadPipeline()
 		m_title += dxgiAdapterDesc.VendorId == 0x1414 && dxgiAdapterDesc.DeviceId == 0x8c ? L" (WARP)" : L" (Software)";
 	ThrowIfFailed(hr);
 
-	D3D12_FEATURE_DATA_D3D12_OPTIONS featureData = {};
-	const auto pDevice = static_cast<ID3D12Device*>(m_device->GetHandle());
-	hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &featureData, sizeof(featureData));
-	if (SUCCEEDED(hr))
-	{
-		// TypedUAVLoadAdditionalFormats contains a Boolean that tells you whether the feature is supported or not
-		if (featureData.TypedUAVLoadAdditionalFormats)
-		{
-			// Can assume "all-or-nothing" subset is supported (e.g. R32G32B32A32_FLOAT)
-			// Cannot assume other formats are supported, so we check:
-			D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
-			hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport, sizeof(formatSupport));
-			if (SUCCEEDED(hr) && (formatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD))
-				m_typedUAV = true;
-		}
-	}
-
 	// Create the command queue.
 	m_commandQueue = CommandQueue::MakeUnique();
 	N_RETURN(m_commandQueue->Create(m_device.get(), CommandListType::DIRECT, CommandQueueFlag::NONE,
@@ -169,7 +152,7 @@ void SHIrradianceEZ::LoadAssets()
 		if (!m_lightProbe) ThrowIfFailed(E_FAIL);
 
 		if (!m_lightProbe->Init(pCommandList, m_width, m_height, m_descriptorTableCache, uploaders,
-			m_envFileNames.data(), static_cast<uint32_t>(m_envFileNames.size()), m_typedUAV))
+			m_envFileNames.data(), static_cast<uint32_t>(m_envFileNames.size())))
 			ThrowIfFailed(E_FAIL);
 
 		m_renderer = make_unique<Renderer>(m_device);
@@ -187,7 +170,7 @@ void SHIrradianceEZ::LoadAssets()
 		if (!m_lightProbeEZ) ThrowIfFailed(E_FAIL);
 
 		if (!m_lightProbeEZ->Init(pCommandList, m_width, m_height, uploaders, m_envFileNames.data(),
-			static_cast<uint32_t>(m_envFileNames.size()), m_typedUAV)) ThrowIfFailed(E_FAIL);
+			static_cast<uint32_t>(m_envFileNames.size()))) ThrowIfFailed(E_FAIL);
 
 		m_rendererEZ = make_unique<RendererEZ>(m_device);
 		if (!m_rendererEZ) ThrowIfFailed(E_FAIL);
@@ -250,13 +233,16 @@ void SHIrradianceEZ::OnUpdate()
 	const auto eyePt = XMLoadFloat3(&m_eyePt);
 	const auto view = XMLoadFloat4x4(&m_view);
 	const auto proj = XMLoadFloat4x4(&m_proj);
-#if 0
-	m_lightProbe->UpdateFrame(time, m_frameIndex);
-	m_renderer->UpdateFrame(m_frameIndex, eyePt, view * proj, m_glossy, m_isPaused);
-#else
-	m_lightProbeEZ->UpdateFrame(time, m_frameIndex);
-	m_rendererEZ->UpdateFrame(m_frameIndex, eyePt, view * proj, m_glossy, m_isPaused);
-#endif
+	if (m_useEZ)
+	{
+		m_lightProbeEZ->UpdateFrame(time, m_frameIndex);
+		m_rendererEZ->UpdateFrame(m_frameIndex, eyePt, view * proj, m_glossy, m_isPaused);
+	}
+	else
+	{
+		m_lightProbe->UpdateFrame(time, m_frameIndex);
+		m_renderer->UpdateFrame(m_frameIndex, eyePt, view * proj, m_glossy, m_isPaused);
+	}
 }
 
 // Render the scene.
@@ -293,6 +279,9 @@ void SHIrradianceEZ::OnKeyUp(uint8_t key)
 		break;
 	case VK_F1:
 		m_showFPS = !m_showFPS;
+		break;
+	case 'X':
+		m_useEZ = !m_useEZ;
 		break;
 	case 'G':
 		m_glossy = 1.0f - m_glossy;
@@ -404,7 +393,19 @@ void SHIrradianceEZ::PopulateCommandList()
 	// list, that command list can then be reset at any time and must be before 
 	// re-recording.
 	const auto pCommandList = m_commandList.get();
-#if 0
+
+	if (m_useEZ)
+	{
+		const auto pCommandList = m_commandListEZ.get();
+		N_RETURN(pCommandList->Reset(pCommandAllocator, nullptr), ThrowIfFailed(E_FAIL));
+
+		// Record commands.
+		m_lightProbeEZ->Process(pCommandList, m_frameIndex);
+		m_rendererEZ->SetLightProbesSH(m_lightProbeEZ->GetSH());
+		m_rendererEZ->Render(pCommandList, m_frameIndex);
+		m_rendererEZ->Postprocess(pCommandList, m_renderTargets[m_frameIndex].get());
+	}
+	else
 	{
 		N_RETURN(pCommandList->Reset(pCommandAllocator, nullptr), ThrowIfFailed(E_FAIL));
 
@@ -423,18 +424,6 @@ void SHIrradianceEZ::PopulateCommandList()
 			0, BARRIER_ALL_SUBRESOURCES, BarrierFlag::END_ONLY);
 		m_renderer->Postprocess(pCommandList, m_renderTargets[m_frameIndex]->GetRTV(), numBarriers, barriers);
 	}
-#else
-	{
-		const auto pCommandList = m_commandListEZ.get();
-		N_RETURN(pCommandList->Reset(pCommandAllocator, nullptr), ThrowIfFailed(E_FAIL));
-
-		// Record commands.
-		m_lightProbeEZ->Process(pCommandList, m_frameIndex);
-		m_rendererEZ->SetLightProbesSH(m_lightProbe->GetSH());
-		m_rendererEZ->Render(pCommandList, m_frameIndex);
-		m_rendererEZ->Postprocess(pCommandList, m_renderTargets[m_frameIndex].get());
-	}
-#endif
 	
 	// Indicate that the back buffer will now be used to present.
 	ResourceBarrier barrier;
@@ -501,6 +490,8 @@ double SHIrradianceEZ::CalculateFrameStats(float* pTimeStep)
 		windowText << L"    fps: ";
 		if (m_showFPS) windowText << setprecision(2) << fixed << fps;
 		else windowText << L"[F1]";
+
+		windowText << L"    [X] " << (m_useEZ ? "XUSG-EZ" : "XUSGCore");
 
 		windowText << L"    [G] Glossy " << m_glossy;
 		SetCustomWindowText(windowText.str().c_str());

@@ -71,8 +71,6 @@ private:
 	XMFLOAT3	m_focusPt;
 	XMFLOAT3	m_eyePt;
 
-	bool		m_typedUAV;
-
 	// Synchronization objects.
 	uint8_t		m_frameIndex;
 	HANDLE		m_fenceEvent;
@@ -81,6 +79,7 @@ private:
 
 	// Application state
 	float		m_glossy;
+	bool		m_useEZ;
 	bool		m_showFPS;
 	bool		m_isPaused;
 	StepTimer	m_timer;
