@@ -318,7 +318,7 @@ void LightProbeEZ::shSum(EZ::CommandList* pCommandList, uint8_t order, uint8_t f
 
 		// Set CBV
 		*reinterpret_cast<uint32_t*>(m_cbSHSums->Map(i++)) = order;
-		const auto cbv = EZ::GetCBV(m_cbSHCubeMap.get());
+		const auto cbv = EZ::GetCBV(m_cbSHSums.get());
 		pCommandList->SetComputeResources(DescriptorType::CBV, 0, 1, &cbv);
 
 		pCommandList->Dispatch(DIV_UP(n, SH_GROUP_SIZE), order * order, 1);
