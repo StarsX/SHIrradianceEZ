@@ -52,7 +52,7 @@ protected:
 	XUSG::ShaderPool::uptr m_shaderPool;
 	XUSG::Blob m_shaders[NUM_SHADER];
 
-	std::vector<XUSG::ShaderResource::sptr> m_sources;
+	std::vector<XUSG::Texture::sptr> m_sources;
 	XUSG::RenderTarget::uptr	m_radiance;
 
 	XUSG::StructuredBuffer::sptr m_coeffSH[2];

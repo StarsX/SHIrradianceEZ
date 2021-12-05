@@ -72,7 +72,7 @@ protected:
 	XUSG::DescriptorTable	m_uavTable;
 	XUSG::DescriptorTable	m_samplerTable;
 
-	std::vector<XUSG::ShaderResource::sptr> m_sources;
+	std::vector<XUSG::Texture::sptr> m_sources;
 	XUSG::RenderTarget::uptr	m_radiance;
 
 	XUSG::StructuredBuffer::sptr m_coeffSH[2];

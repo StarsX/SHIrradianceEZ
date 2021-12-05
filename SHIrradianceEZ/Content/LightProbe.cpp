@@ -329,7 +329,7 @@ void LightProbe::generateRadianceCompute(const CommandList* pCommandList, uint8_
 	pCommandList->SetComputePipelineLayout(m_pipelineLayouts[GEN_RADIANCE_COMPUTE]);
 	pCommandList->SetComputeRootConstantBufferView(1, m_cbPerFrame.get(), m_cbPerFrame->GetCBVOffset(frameIndex));
 
-	m_radiance->AsTexture2D()->Blit(pCommandList, 8, 8, 1, m_uavTable, 2, 0,
+	m_radiance->AsTexture()->Blit(pCommandList, 8, 8, 1, m_uavTable, 2, 0,
 		m_srvTables[SRV_TABLE_INPUT][m_inputProbeIdx], 3, m_samplerTable, 0, m_pipelines[GEN_RADIANCE_COMPUTE]);
 }
 

@@ -206,8 +206,8 @@ void LightProbeEZ::generateRadianceGraphics(EZ::CommandList* pCommandList, uint8
 		// Set SRVs
 		const EZ::ResourceView srvs[] =
 		{
-			EZ::GetSRV(dynamic_cast<EZ::Texture*>(m_sources[m_inputProbeIdx].get())),
-			EZ::GetSRV(dynamic_cast<EZ::Texture*>(m_sources[nextProbeIdx].get()))
+			EZ::GetSRV(m_sources[m_inputProbeIdx].get()),
+			EZ::GetSRV(m_sources[nextProbeIdx].get())
 		};
 		pCommandList->SetGraphicsResources(Shader::Stage::PS, DescriptorType::SRV, 0,
 			static_cast<uint32_t>(size(srvs)), srvs);
@@ -241,8 +241,8 @@ void LightProbeEZ::generateRadianceCompute(EZ::CommandList* pCommandList, uint8_
 
 		const EZ::ResourceView srvs[] =
 		{
-			EZ::GetSRV(dynamic_cast<EZ::Texture*>(m_sources[m_inputProbeIdx].get())),
-			EZ::GetSRV(dynamic_cast<EZ::Texture*>(m_sources[nextProbeIdx].get()))
+			EZ::GetSRV(m_sources[m_inputProbeIdx].get()),
+			EZ::GetSRV(m_sources[nextProbeIdx].get())
 		};
 		pCommandList->SetComputeResources(DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
 

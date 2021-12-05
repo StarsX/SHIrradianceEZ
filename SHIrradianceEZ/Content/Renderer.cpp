@@ -347,7 +347,6 @@ bool Renderer::createPipelines(Format rtFormat)
 
 	// Base pass
 	N_RETURN(m_shaderPool->CreateShader(Shader::Stage::VS, vsIndex, L"VSBasePass.cso"), false);
-	// Base pass SH
 	{
 		N_RETURN(m_shaderPool->CreateShader(Shader::Stage::PS, psIndex, L"PSBasePassSH.cso"), false);
 
