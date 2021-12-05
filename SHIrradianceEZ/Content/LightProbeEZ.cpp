@@ -99,6 +99,7 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 	{
 		auto loopCount = 0u;
 		for (auto n = DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = DIV_UP(n, SH_GROUP_SIZE)) ++loopCount;
+		m_cbSHSums = ConstantBuffer::MakeUnique();
 		N_RETURN(m_cbSHSums->Create(m_device.get(), sizeof(uint32_t[2]) * loopCount, loopCount,
 			nullptr, MemoryType::UPLOAD, MemoryFlag::NONE, L"CBSHSums"), false);
 
@@ -227,32 +228,30 @@ void LightProbeEZ::generateRadianceCompute(EZ::CommandList* pCommandList, uint8_
 	const auto state = pCommandList->GetComputePipelineState();
 	state->SetShader(m_shaders[CS_GEN_RADIANCE]);
 
+	// Set UAV
+	const auto uav = EZ::GetUAV(m_radiance.get());
+	pCommandList->SetComputeResources(DescriptorType::UAV, 0, 1, &uav);
+
+	// Set CBV
+	const auto cbv = EZ::GetCBV(m_cbPerFrame.get(), frameIndex);
+	pCommandList->SetComputeResources(DescriptorType::CBV, 0, 1, &cbv);
+
+	// Set SRVs
 	const auto numSources = static_cast<uint32_t>(m_sources.size());
 	const auto nextProbeIdx = (m_inputProbeIdx + 1) % numSources;
-	for (uint8_t i = 0; i < 6; ++i)
+	const EZ::ResourceView srvs[] =
 	{
-		// Set UAV
-		const auto uav = EZ::GetUAV(m_radiance.get(), i);
-		pCommandList->SetComputeResources(DescriptorType::UAV, 0, 1, &uav);
+		EZ::GetSRV(m_sources[m_inputProbeIdx].get()),
+		EZ::GetSRV(m_sources[nextProbeIdx].get())
+	};
+	pCommandList->SetComputeResources(DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
 
-		// Set CBV
-		const auto cbv = EZ::GetCBV(m_cbPerFrame.get(), frameIndex);
-		pCommandList->SetComputeResources(DescriptorType::CBV, 0, 1, &cbv);
+	const auto sampler = SamplerPreset::LINEAR_WRAP;
+	pCommandList->SetComputeSamplerStates(0, 1, &sampler);
 
-		const EZ::ResourceView srvs[] =
-		{
-			EZ::GetSRV(m_sources[m_inputProbeIdx].get()),
-			EZ::GetSRV(m_sources[nextProbeIdx].get())
-		};
-		pCommandList->SetComputeResources(DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
-
-		const auto sampler = SamplerPreset::LINEAR_WRAP;
-		pCommandList->SetComputeSamplerStates(0, 1, &sampler);
-
-		const auto w = m_radiance->GetWidth();
-		const auto h = m_radiance->GetHeight();
-		pCommandList->Dispatch(DIV_UP(w, 8), DIV_UP(h, 8), 1);
-	}
+	const auto w = m_radiance->GetWidth();
+	const auto h = m_radiance->GetHeight();
+	pCommandList->Dispatch(DIV_UP(w, 8), DIV_UP(h, 8), 6);
 }
 
 void LightProbeEZ::shCubeMap(EZ::CommandList* pCommandList, uint8_t order)

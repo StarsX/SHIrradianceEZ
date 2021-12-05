@@ -60,6 +60,7 @@ protected:
 		const uint32_t* pData, std::vector<XUSG::Resource::uptr>& uploaders);
 	bool createShaders();
 
+	void createInputLayout();
 	void render(XUSG::EZ::CommandList* pCommandList, uint8_t frameIndex, bool needClear);
 	void environment(XUSG::EZ::CommandList* pCommandList, uint8_t frameIndex);
 	void temporalAA(XUSG::EZ::CommandList* pCommandList);
@@ -73,8 +74,7 @@ protected:
 	DirectX::XMFLOAT4	m_posScale;
 	DirectX::XMFLOAT4X4	m_worldViewProj;
 
-	XUSG::InputElement m_inputElements[2];
-	const XUSG::InputLayout* m_pInputLayout;
+	XUSG::InputLayout m_inputLayout;
 
 	XUSG::Texture::sptr m_radiance;
 	XUSG::StructuredBuffer::sptr m_coeffSH;

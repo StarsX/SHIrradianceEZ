@@ -158,23 +158,44 @@ void SHIrradianceEZ::LoadAssets()
 	N_RETURN(pCommandList->Create(m_device.get(), 0, CommandListType::DIRECT,
 		m_commandAllocators[m_frameIndex].get(), nullptr), ThrowIfFailed(E_FAIL));
 
-	m_lightProbe = make_unique<LightProbe>(m_device);
-	if (!m_lightProbe) ThrowIfFailed(E_FAIL);
+	m_commandListEZ = EZ::CommandList::MakeUnique();
+	const auto maxCBVs = 14u;
+	N_RETURN(m_commandListEZ->Create(m_device.get(), pCommandList, 4, 256, 16, &maxCBVs),
+		ThrowIfFailed(E_FAIL));
 
-	shared_ptr<ShaderResource::sptr> source;
-	vector<Resource::uptr> uploaders(0);
-	if (!m_lightProbe->Init(pCommandList, m_width, m_height, m_descriptorTableCache, uploaders,
-		m_envFileNames.data(), static_cast<uint32_t>(m_envFileNames.size()), m_typedUAV))
-		ThrowIfFailed(E_FAIL);
+	vector<Resource::uptr> uploaders(0);	
+	{
+		m_lightProbe = make_unique<LightProbe>(m_device);
+		if (!m_lightProbe) ThrowIfFailed(E_FAIL);
 
-	m_renderer = make_unique<Renderer>(m_device);
-	if (!m_renderer) ThrowIfFailed(E_FAIL);
+		if (!m_lightProbe->Init(pCommandList, m_width, m_height, m_descriptorTableCache, uploaders,
+			m_envFileNames.data(), static_cast<uint32_t>(m_envFileNames.size()), m_typedUAV))
+			ThrowIfFailed(E_FAIL);
 
-	if (!m_renderer->Init(pCommandList, m_width, m_height, m_descriptorTableCache,
-		uploaders, m_meshFileName.c_str(), Format::B8G8R8A8_UNORM, m_meshPosScale))
-		ThrowIfFailed(E_FAIL);
-	if (!m_renderer->SetLightProbe(m_lightProbe->GetRadiance()->GetSRV()))
-		ThrowIfFailed(E_FAIL);
+		m_renderer = make_unique<Renderer>(m_device);
+		if (!m_renderer) ThrowIfFailed(E_FAIL);
+
+		if (!m_renderer->Init(pCommandList, m_width, m_height, m_descriptorTableCache,
+			uploaders, m_meshFileName.c_str(), Format::B8G8R8A8_UNORM, m_meshPosScale))
+			ThrowIfFailed(E_FAIL);
+		if (!m_renderer->SetLightProbe(m_lightProbe->GetRadiance()->GetSRV()))
+			ThrowIfFailed(E_FAIL);
+	}
+
+	{
+		m_lightProbeEZ = make_unique<LightProbeEZ>(m_device);
+		if (!m_lightProbeEZ) ThrowIfFailed(E_FAIL);
+
+		if (!m_lightProbeEZ->Init(pCommandList, m_width, m_height, uploaders, m_envFileNames.data(),
+			static_cast<uint32_t>(m_envFileNames.size()), m_typedUAV)) ThrowIfFailed(E_FAIL);
+
+		m_rendererEZ = make_unique<RendererEZ>(m_device);
+		if (!m_rendererEZ) ThrowIfFailed(E_FAIL);
+
+		if (!m_rendererEZ->Init(pCommandList, m_width, m_height, uploaders, m_meshFileName.c_str(), m_meshPosScale))
+			ThrowIfFailed(E_FAIL);
+		m_rendererEZ->SetLightProbe(m_lightProbeEZ->GetRadiance());
+	}
 	
 	// Close the command list and execute it to begin the initial GPU setup.
 	N_RETURN(pCommandList->Close(), ThrowIfFailed(E_FAIL));
@@ -229,8 +250,13 @@ void SHIrradianceEZ::OnUpdate()
 	const auto eyePt = XMLoadFloat3(&m_eyePt);
 	const auto view = XMLoadFloat4x4(&m_view);
 	const auto proj = XMLoadFloat4x4(&m_proj);
+#if 0
 	m_lightProbe->UpdateFrame(time, m_frameIndex);
 	m_renderer->UpdateFrame(m_frameIndex, eyePt, view * proj, m_glossy, m_isPaused);
+#else
+	m_lightProbeEZ->UpdateFrame(time, m_frameIndex);
+	m_rendererEZ->UpdateFrame(m_frameIndex, eyePt, view * proj, m_glossy, m_isPaused);
+#endif
 }
 
 // Render the scene.
@@ -378,26 +404,42 @@ void SHIrradianceEZ::PopulateCommandList()
 	// list, that command list can then be reset at any time and must be before 
 	// re-recording.
 	const auto pCommandList = m_commandList.get();
-	N_RETURN(pCommandList->Reset(pCommandAllocator, nullptr), ThrowIfFailed(E_FAIL));
+#if 0
+	{
+		N_RETURN(pCommandList->Reset(pCommandAllocator, nullptr), ThrowIfFailed(E_FAIL));
 
-	// Record commands.
-	m_lightProbe->Process(pCommandList, m_frameIndex);
-	m_renderer->SetLightProbesSH(m_lightProbe->GetSH());
+		// Record commands.
+		m_lightProbe->Process(pCommandList, m_frameIndex);
+		m_renderer->SetLightProbesSH(m_lightProbe->GetSH());
 
-	ResourceBarrier barriers[5];
-	const auto dstState = ResourceState::NON_PIXEL_SHADER_RESOURCE | ResourceState::PIXEL_SHADER_RESOURCE;
-	auto numBarriers = 0u;
-	numBarriers = m_renderTargets[m_frameIndex]->SetBarrier(barriers, ResourceState::RENDER_TARGET,
-		numBarriers, BARRIER_ALL_SUBRESOURCES, BarrierFlag::BEGIN_ONLY);
-	m_renderer->Render(pCommandList, m_frameIndex, barriers, numBarriers);
+		ResourceBarrier barriers[5];
+		const auto dstState = ResourceState::NON_PIXEL_SHADER_RESOURCE | ResourceState::PIXEL_SHADER_RESOURCE;
+		auto numBarriers = 0u;
+		numBarriers = m_renderTargets[m_frameIndex]->SetBarrier(barriers, ResourceState::RENDER_TARGET,
+			numBarriers, BARRIER_ALL_SUBRESOURCES, BarrierFlag::BEGIN_ONLY);
+		m_renderer->Render(pCommandList, m_frameIndex, barriers, numBarriers);
 
-	numBarriers = m_renderTargets[m_frameIndex]->SetBarrier(barriers, ResourceState::RENDER_TARGET,
-		0, BARRIER_ALL_SUBRESOURCES, BarrierFlag::END_ONLY);
-	m_renderer->Postprocess(pCommandList, m_renderTargets[m_frameIndex]->GetRTV(), numBarriers, barriers);
+		numBarriers = m_renderTargets[m_frameIndex]->SetBarrier(barriers, ResourceState::RENDER_TARGET,
+			0, BARRIER_ALL_SUBRESOURCES, BarrierFlag::END_ONLY);
+		m_renderer->Postprocess(pCommandList, m_renderTargets[m_frameIndex]->GetRTV(), numBarriers, barriers);
+	}
+#else
+	{
+		const auto pCommandList = m_commandListEZ.get();
+		N_RETURN(pCommandList->Reset(pCommandAllocator, nullptr), ThrowIfFailed(E_FAIL));
+
+		// Record commands.
+		m_lightProbeEZ->Process(pCommandList, m_frameIndex);
+		m_rendererEZ->SetLightProbesSH(m_lightProbe->GetSH());
+		m_rendererEZ->Render(pCommandList, m_frameIndex);
+		m_rendererEZ->Postprocess(pCommandList, m_renderTargets[m_frameIndex].get());
+	}
+#endif
 	
 	// Indicate that the back buffer will now be used to present.
-	numBarriers = m_renderTargets[m_frameIndex]->SetBarrier(barriers, ResourceState::PRESENT);
-	pCommandList->Barrier(numBarriers, barriers);
+	ResourceBarrier barrier;
+	const auto numBarriers = m_renderTargets[m_frameIndex]->SetBarrier(&barrier, ResourceState::PRESENT);
+	pCommandList->Barrier(numBarriers, &barrier);
 
 	N_RETURN(pCommandList->Close(), ThrowIfFailed(E_FAIL));
 }

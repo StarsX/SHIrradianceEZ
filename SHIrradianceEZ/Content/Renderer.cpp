@@ -100,11 +100,9 @@ bool Renderer::SetLightProbe(const Descriptor& radiance)
 	return true;
 }
 
-bool Renderer::SetLightProbesSH(const StructuredBuffer::sptr& coeffSH)
+void Renderer::SetLightProbesSH(const StructuredBuffer::sptr& coeffSH)
 {
 	m_coeffSH = coeffSH;
-
-	return true;
 }
 
 static const XMFLOAT2& IncrementalHalton()

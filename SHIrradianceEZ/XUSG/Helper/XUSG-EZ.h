@@ -95,7 +95,6 @@ namespace XUSG
 			virtual void SetComputeSamplerStates(uint32_t startBinding, uint32_t numSamplers, const SamplerPreset* pSamplerPresets) = 0;
 			virtual void SetComputeResources(DescriptorType descriptorType, uint32_t startBinding,
 				uint32_t numResources, const ResourceView* pResourceViews, uint32_t space = 0) = 0;
-			virtual void IASetInputLayout(uint32_t numElements, const InputElement* pInputElements) = 0;
 			virtual void IASetPrimitiveTopology(PrimitiveTopology primitiveTopology) = 0;
 			virtual void IASetIndexBuffer(const IndexBufferView& view) const = 0;
 			virtual void IASetVertexBuffers(uint32_t startSlot, uint32_t numViews, const VertexBufferView* pViews) const = 0;

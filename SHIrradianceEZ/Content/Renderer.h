@@ -17,8 +17,8 @@ public:
 		std::vector<XUSG::Resource::uptr>& uploaders, const char* fileName, XUSG::Format rtFormat,
 		const DirectX::XMFLOAT4& posScale = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 	bool SetLightProbe(const XUSG::Descriptor& radiance);
-	bool SetLightProbesSH(const XUSG::StructuredBuffer::sptr& coeffSH);
 
+	void SetLightProbesSH(const XUSG::StructuredBuffer::sptr& coeffSH);
 	void UpdateFrame(uint8_t frameIndex, DirectX::CXMVECTOR eyePt,
 		DirectX::CXMMATRIX viewProj, float glossy, bool isPaused);
 	void Render(const XUSG::CommandList* pCommandList, uint8_t frameIndex, XUSG::ResourceBarrier* barriers,

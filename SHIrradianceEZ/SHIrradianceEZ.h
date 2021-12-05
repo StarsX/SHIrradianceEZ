@@ -14,6 +14,8 @@
 #include "StepTimer.h"
 #include "LightProbe.h"
 #include "Renderer.h"
+#include "LightProbeEZ.h"
+#include "RendererEZ.h"
 
 using namespace DirectX;
 
@@ -61,6 +63,8 @@ private:
 	// App resources.
 	std::unique_ptr<LightProbe>	m_lightProbe;
 	std::unique_ptr<Renderer>	m_renderer;
+	std::unique_ptr<LightProbeEZ> m_lightProbeEZ;
+	std::unique_ptr<RendererEZ>	m_rendererEZ;
 	//XUSG::DepthStencil::uptr	m_depth;
 	XMFLOAT4X4	m_proj;
 	XMFLOAT4X4	m_view;

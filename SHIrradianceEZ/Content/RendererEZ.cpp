@@ -76,9 +76,9 @@ bool RendererEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t height
 	N_RETURN(m_cbPerFrame->Create(m_device.get(), sizeof(CBPerFrame[FrameCount]), FrameCount,
 		nullptr, MemoryType::UPLOAD, MemoryFlag::NONE, L"CBPerFrame"), false);
 
-	// Create input layout
-	m_inputElements[0] = { "POSITION",	0, Format::R32G32B32_FLOAT, 0, 0,								InputClassification::PER_VERTEX_DATA, 0 };
-	m_inputElements[1] = { "NORMAL",	0, Format::R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,	InputClassification::PER_VERTEX_DATA, 0 };
+	// Create shaders and input layout
+	N_RETURN(createShaders(), false);
+	createInputLayout();
 
 	return true;
 }
@@ -275,17 +275,30 @@ bool RendererEZ::createShaders()
 	return true;
 }
 
+void RendererEZ::createInputLayout()
+{
+	// Define the vertex input layout.
+	const InputElement inputElements[] =
+	{
+		{ "POSITION",	0, Format::R32G32B32_FLOAT, 0, 0,								InputClassification::PER_VERTEX_DATA, 0 },
+		{ "NORMAL",		0, Format::R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,	InputClassification::PER_VERTEX_DATA, 0 }
+	};
+
+	m_inputLayout.resize(static_cast<uint32_t>(size(inputElements)));
+	memcpy(m_inputLayout.data(), inputElements, sizeof(inputElements));
+}
+
 void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool needClear)
 {
 	// Set pipeline state
 	const auto state = pCommandList->GetGraphicsPipelineState();
+	state->IASetInputLayout(&m_inputLayout);
 	state->SetShader(Shader::Stage::VS, m_shaders[VS_BASE_PASS]);
 	state->SetShader(Shader::Stage::PS, m_shaders[PS_BASE_PASS]);
 	state->OMSetNumRenderTargets(NUM_RENDER_TARGET);
 	state->OMSetRTVFormat(RT_COLOR, Format::R16G16B16A16_FLOAT);
 	state->OMSetRTVFormat(RT_VELOCITY, Format::R16G16_FLOAT);
 	state->OMSetDSVFormat(Format::D24_UNORM_S8_UINT);
-	pCommandList->IASetInputLayout(static_cast<uint32_t>(size(m_inputElements)), m_inputElements);
 
 	// Set render targets
 	EZ::ResourceView rtvs[] =
@@ -345,6 +358,7 @@ void RendererEZ::environment(EZ::CommandList* pCommandList, uint8_t frameIndex)
 	state->SetShader(Shader::Stage::PS, m_shaders[PS_ENVIRONMENT]);
 	state->OMSetNumRenderTargets(1);
 	state->OMSetRTVFormat(RT_COLOR, Format::R16G16B16A16_FLOAT);
+	state->OMSetRTVFormat(RT_VELOCITY, Format::UNKNOWN);
 	state->OMSetDSVFormat(Format::D24_UNORM_S8_UINT);
 	pCommandList->DSSetState(Graphics::DEPTH_READ_LESS_EQUAL);
 
