@@ -47,7 +47,7 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 
 	// Create resources
 	const auto format = Format::R11G11B10_FLOAT;
-	m_radiance = RenderTarget::MakeUnique();
+	m_radiance = RenderTarget::MakeShared();
 	m_radiance->Create(m_device.get(), texWidth, texHeight, format, 6,
 		ResourceFlag::ALLOW_UNORDERED_ACCESS, 1, 1, nullptr, true,
 		MemoryFlag::NONE, L"Radiance");
@@ -137,9 +137,9 @@ void LightProbeEZ::Process(EZ::CommandList* pCommandList, uint8_t frameIndex)
 	shNormalize(pCommandList, order);
 }
 
-ShaderResource* LightProbeEZ::GetRadiance() const
+Texture::sptr LightProbeEZ::GetRadiance() const
 {
-	return m_radiance.get();
+	return m_radiance;
 }
 
 StructuredBuffer::sptr LightProbeEZ::GetSH() const
@@ -181,7 +181,7 @@ void LightProbeEZ::generateRadianceGraphics(EZ::CommandList* pCommandList, uint8
 	state->SetShader(Shader::Stage::VS, m_shaders[VS_SCREEN_QUAD]);
 	state->SetShader(Shader::Stage::PS, m_shaders[PS_GEN_RADIANCE]);
 	state->OMSetNumRenderTargets(1);
-	state->OMSetRTVFormat(0, Format::R11G11B10_FLOAT);
+	state->OMSetRTVFormat(0, m_radiance->GetFormat());
 	pCommandList->DSSetState(Graphics::DEPTH_STENCIL_NONE);
 
 	// Set IA

@@ -20,7 +20,7 @@ public:
 	void UpdateFrame(double time, uint8_t frameIndex);
 	void Process(XUSG::EZ::CommandList* pCommandList, uint8_t frameIndex);
 
-	XUSG::ShaderResource* GetRadiance() const;
+	XUSG::Texture::sptr GetRadiance() const;
 	XUSG::StructuredBuffer::sptr GetSH() const;
 
 	static const uint8_t FrameCount = 3;
@@ -53,7 +53,7 @@ protected:
 	XUSG::Blob m_shaders[NUM_SHADER];
 
 	std::vector<XUSG::Texture::sptr> m_sources;
-	XUSG::RenderTarget::uptr	m_radiance;
+	XUSG::RenderTarget::sptr	m_radiance;
 
 	XUSG::StructuredBuffer::sptr m_coeffSH[2];
 	XUSG::StructuredBuffer::uptr m_weightSH[2];

@@ -84,6 +84,9 @@
     <ClInclude Include="XUSG\Helper\XUSG-EZ.h">
       <Filter>XUSG</Filter>
     </ClInclude>
+    <ClInclude Include="Content\RendererEZ.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common\DXFramework.cpp">
@@ -111,6 +114,9 @@
       <Filter>XUSG\Optional</Filter>
     </ClCompile>
     <ClCompile Include="Content\LightProbeEZ.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Content\RendererEZ.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
