@@ -142,8 +142,7 @@ void SHIrradianceEZ::LoadAssets()
 		m_commandAllocators[m_frameIndex].get(), nullptr), ThrowIfFailed(E_FAIL));
 
 	m_commandListEZ = EZ::CommandList::MakeUnique();
-	const auto maxCBVs = 14u;
-	N_RETURN(m_commandListEZ->Create(m_device.get(), pCommandList, 3, 52, 2, &maxCBVs),
+	N_RETURN(m_commandListEZ->Create(m_device.get(), pCommandList, 3, 52),
 		ThrowIfFailed(E_FAIL));
 
 	vector<Resource::uptr> uploaders(0);	

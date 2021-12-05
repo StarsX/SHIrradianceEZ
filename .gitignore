@@ -308,4 +308,5 @@ $RECYCLE.BIN/
 *.lnk
 
 !XUSG.pdb
+!XUSG-EZ.pdb
 !Bin/*/*.[Oo]bj
