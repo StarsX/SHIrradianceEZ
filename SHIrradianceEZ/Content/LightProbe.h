@@ -19,7 +19,7 @@ public:
 		uint32_t numFiles);
 
 	void UpdateFrame(double time, uint8_t frameIndex);
-	void Process(const XUSG::CommandList* pCommandList, uint8_t frameIndex);
+	void Process(XUSG::CommandList* pCommandList, uint8_t frameIndex);
 
 	XUSG::ShaderResource* GetRadiance() const;
 	XUSG::StructuredBuffer::sptr GetSH() const;
@@ -51,11 +51,11 @@ protected:
 	bool createPipelines(XUSG::Format rtFormat);
 	bool createDescriptorTables();
 
-	void generateRadianceGraphics(const XUSG::CommandList* pCommandList, uint8_t frameIndex);
-	void generateRadianceCompute(const XUSG::CommandList* pCommandList, uint8_t frameIndex);
-	void shCubeMap(const XUSG::CommandList* pCommandList, uint8_t order);
-	void shSum(const XUSG::CommandList* pCommandList, uint8_t order);
-	void shNormalize(const XUSG::CommandList* pCommandList, uint8_t order);
+	void generateRadianceGraphics(XUSG::CommandList* pCommandList, uint8_t frameIndex);
+	void generateRadianceCompute(XUSG::CommandList* pCommandList, uint8_t frameIndex);
+	void shCubeMap(XUSG::CommandList* pCommandList, uint8_t order);
+	void shSum(XUSG::CommandList* pCommandList, uint8_t order);
+	void shNormalize(XUSG::CommandList* pCommandList, uint8_t order);
 	
 	XUSG::Device::sptr m_device;
 
