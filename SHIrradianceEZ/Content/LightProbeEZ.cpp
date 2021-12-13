@@ -9,7 +9,7 @@
 
 #define SH_MAX_ORDER	6
 #define SH_TEX_SIZE		256
-#define SH_GROUP_SIZE	32
+#define SH_GROUP_SIZE	1024
 
 using namespace std;
 using namespace DirectX;
