@@ -2,14 +2,11 @@
 // Copyright (c) XU, Tianchen. All rights reserved.
 //--------------------------------------------------------------------------------------
 
+#include "SHSharedConsts.h"
 #include "LightProbeEZ.h"
 #define _INDEPENDENT_DDS_LOADER_
 #include "Advanced/XUSGDDSLoader.h"
 #undef _INDEPENDENT_DDS_LOADER_
-
-#define SH_MAX_ORDER	6
-#define SH_TEX_SIZE		256
-#define SH_GROUP_SIZE	1024
 
 using namespace std;
 using namespace DirectX;
