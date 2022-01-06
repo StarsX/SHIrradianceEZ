@@ -245,7 +245,7 @@ void LightProbeEZ::generateRadianceCompute(EZ::CommandList* pCommandList, uint8_
 	const auto sampler = SamplerPreset::LINEAR_WRAP;
 	pCommandList->SetComputeSamplerStates(0, 1, &sampler);
 
-	const auto w = m_radiance->GetWidth();
+	const auto w = static_cast<uint32_t>(m_radiance->GetWidth());
 	const auto h = m_radiance->GetHeight();
 	pCommandList->Dispatch(DIV_UP(w, 8), DIV_UP(h, 8), 6);
 }
