@@ -17,12 +17,12 @@ typedef min16float3	HALF3;
 typedef min16float4	HALF4;
 #endif
 
-#define	_VARIANCE_AABB_	1
+#define _VARIANCE_AABB_	1
 #define _USE_YCOCG_		1
 
-#define	NUM_NEIGHBORS	8
-#define	NUM_SAMPLES		(NUM_NEIGHBORS + 1)
-#define	NUM_NEIGHBORS_H	4
+#define NUM_NEIGHBORS	8
+#define NUM_SAMPLES		(NUM_NEIGHBORS + 1)
+#define NUM_NEIGHBORS_H	4
 
 #define GET_LUMA4(v)	dot(v, g_luma4Base)
 
