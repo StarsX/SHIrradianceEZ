@@ -10,7 +10,7 @@
 class LightProbeEZ
 {
 public:
-	LightProbeEZ(const XUSG::Device::sptr& device);
+	LightProbeEZ();
 	virtual ~LightProbeEZ();
 
 	bool Init(XUSG::CommandList* pCommandList, uint32_t width, uint32_t height,
@@ -46,8 +46,6 @@ protected:
 	void shCubeMap(XUSG::EZ::CommandList* pCommandList, uint8_t order);
 	void shSum(XUSG::EZ::CommandList* pCommandList, uint8_t order, uint8_t frameIndex);
 	void shNormalize(XUSG::EZ::CommandList* pCommandList, uint8_t order);
-
-	XUSG::Device::sptr m_device;
 
 	XUSG::ShaderPool::uptr m_shaderPool;
 	XUSG::Blob m_shaders[NUM_SHADER];

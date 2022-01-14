@@ -93,7 +93,7 @@ void SHIrradianceEZ::LoadPipeline()
 		dxgiAdapter = nullptr;
 		ThrowIfFailed(factory->EnumAdapters1(i, &dxgiAdapter));
 
-		m_device = Device::MakeShared();
+		m_device = Device::MakeUnique();
 		hr = m_device->Create(dxgiAdapter.get(), D3D_FEATURE_LEVEL_11_0);
 	}
 
@@ -142,19 +142,19 @@ void SHIrradianceEZ::LoadAssets()
 		m_commandAllocators[m_frameIndex].get(), nullptr), ThrowIfFailed(E_FAIL));
 
 	m_commandListEZ = EZ::CommandList::MakeUnique();
-	N_RETURN(m_commandListEZ->Create(m_device.get(), pCommandList, 3, 52),
+	N_RETURN(m_commandListEZ->Create(pCommandList, 3, 52),
 		ThrowIfFailed(E_FAIL));
 
 	vector<Resource::uptr> uploaders(0);	
 	{
-		m_lightProbe = make_unique<LightProbe>(m_device);
+		m_lightProbe = make_unique<LightProbe>();
 		if (!m_lightProbe) ThrowIfFailed(E_FAIL);
 
 		if (!m_lightProbe->Init(pCommandList, m_width, m_height, m_descriptorTableCache, uploaders,
 			m_envFileNames.data(), static_cast<uint32_t>(m_envFileNames.size())))
 			ThrowIfFailed(E_FAIL);
 
-		m_renderer = make_unique<Renderer>(m_device);
+		m_renderer = make_unique<Renderer>();
 		if (!m_renderer) ThrowIfFailed(E_FAIL);
 
 		if (!m_renderer->Init(pCommandList, m_width, m_height, m_descriptorTableCache,
@@ -165,13 +165,13 @@ void SHIrradianceEZ::LoadAssets()
 	}
 
 	{
-		m_lightProbeEZ = make_unique<LightProbeEZ>(m_device);
+		m_lightProbeEZ = make_unique<LightProbeEZ>();
 		if (!m_lightProbeEZ) ThrowIfFailed(E_FAIL);
 
 		if (!m_lightProbeEZ->Init(pCommandList, m_width, m_height, uploaders, m_envFileNames.data(),
 			static_cast<uint32_t>(m_envFileNames.size()))) ThrowIfFailed(E_FAIL);
 
-		m_rendererEZ = make_unique<RendererEZ>(m_device);
+		m_rendererEZ = make_unique<RendererEZ>();
 		if (!m_rendererEZ) ThrowIfFailed(E_FAIL);
 
 		if (!m_rendererEZ->Init(pCommandList, m_width, m_height, uploaders, m_meshFileName.c_str(), m_meshPosScale))

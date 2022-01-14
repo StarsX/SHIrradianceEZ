@@ -12,8 +12,7 @@ using namespace std;
 using namespace DirectX;
 using namespace XUSG;
 
-LightProbeEZ::LightProbeEZ(const Device::sptr& device) :
-	m_device(device)
+LightProbeEZ::LightProbeEZ()
 {
 	m_shaderPool = ShaderPool::MakeUnique();
 }
@@ -25,6 +24,8 @@ LightProbeEZ::~LightProbeEZ()
 bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t height,
 	vector<Resource::uptr>& uploaders, const wstring pFileNames[], uint32_t numFiles)
 {
+	const auto pDevice = pCommandList->GetDevice();
+
 	// Load input image
 	auto texWidth = 1u, texHeight = 1u;
 	m_sources.resize(numFiles);
@@ -34,7 +35,7 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 		DDS::AlphaMode alphaMode;
 
 		uploaders.emplace_back(Resource::MakeUnique());
-		N_RETURN(textureLoader.CreateTextureFromFile(m_device.get(), pCommandList, pFileNames[i].c_str(),
+		N_RETURN(textureLoader.CreateTextureFromFile(pCommandList, pFileNames[i].c_str(),
 			8192, false, m_sources[i], uploaders.back().get(), &alphaMode), false);
 
 		texWidth = (max)(static_cast<uint32_t>(m_sources[i]->GetWidth()), texWidth);
@@ -44,7 +45,7 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 	// Create resources
 	const auto format = Format::R11G11B10_FLOAT;
 	m_radiance = RenderTarget::MakeShared();
-	m_radiance->Create(m_device.get(), texWidth, texHeight, format, 6,
+	m_radiance->Create(pDevice, texWidth, texHeight, format, 6,
 		ResourceFlag::ALLOW_UNORDERED_ACCESS, 1, 1, nullptr, true,
 		MemoryFlag::NONE, L"Radiance");
 
@@ -54,30 +55,30 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 	const auto maxElements = SH_MAX_ORDER * SH_MAX_ORDER * numGroups;
 	const auto maxSumElements = SH_MAX_ORDER * SH_MAX_ORDER * numSumGroups;
 	m_coeffSH[0] = StructuredBuffer::MakeShared();
-	m_coeffSH[0]->Create(m_device.get(), maxElements, sizeof(float[3]),
+	m_coeffSH[0]->Create(pDevice, maxElements, sizeof(float[3]),
 		ResourceFlag::ALLOW_UNORDERED_ACCESS, MemoryType::DEFAULT,
 		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHCoefficients0");
 	m_coeffSH[1] = StructuredBuffer::MakeShared();
-	m_coeffSH[1]->Create(m_device.get(), maxSumElements, sizeof(float[3]),
+	m_coeffSH[1]->Create(pDevice, maxSumElements, sizeof(float[3]),
 		ResourceFlag::ALLOW_UNORDERED_ACCESS, MemoryType::DEFAULT,
 		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHCoefficients1");
 	m_weightSH[0] = StructuredBuffer::MakeUnique();
-	m_weightSH[0]->Create(m_device.get(), numGroups, sizeof(float),
+	m_weightSH[0]->Create(pDevice, numGroups, sizeof(float),
 		ResourceFlag::ALLOW_UNORDERED_ACCESS, MemoryType::DEFAULT,
 		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHWeights0");
 	m_weightSH[1] = StructuredBuffer::MakeUnique();
-	m_weightSH[1]->Create(m_device.get(), numSumGroups, sizeof(float),
+	m_weightSH[1]->Create(pDevice, numSumGroups, sizeof(float),
 		ResourceFlag::ALLOW_UNORDERED_ACCESS, MemoryType::DEFAULT,
 		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHWeights1");
 
 	// Create constant buffers
 	m_cbPerFrame = ConstantBuffer::MakeUnique();
-	N_RETURN(m_cbPerFrame->Create(m_device.get(), sizeof(float[FrameCount]), FrameCount,
+	N_RETURN(m_cbPerFrame->Create(pDevice, sizeof(float[FrameCount]), FrameCount,
 		nullptr, MemoryType::UPLOAD, MemoryFlag::NONE, L"CBPerFrame"), false);
 
 	{
 		m_cbCubeMapSlices = ConstantBuffer::MakeUnique();
-		N_RETURN(m_cbCubeMapSlices->Create(m_device.get(), sizeof(uint32_t[6]), 6, nullptr,
+		N_RETURN(m_cbCubeMapSlices->Create(pDevice, sizeof(uint32_t[6]), 6, nullptr,
 			MemoryType::UPLOAD, MemoryFlag::NONE, L"Slices"), false);
 		
 		for (uint8_t i = 0; i < 6; ++i)
@@ -86,7 +87,7 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 
 	{
 		m_cbSHCubeMap = ConstantBuffer::MakeUnique();
-		N_RETURN(m_cbSHCubeMap->Create(m_device.get(), sizeof(uint32_t[2]), 1, nullptr,
+		N_RETURN(m_cbSHCubeMap->Create(pDevice, sizeof(uint32_t[2]), 1, nullptr,
 			MemoryType::UPLOAD, MemoryFlag::NONE, L"CBSHCubeMap"), false);
 
 		reinterpret_cast<uint32_t*>(m_cbSHCubeMap->Map())[1] = SH_TEX_SIZE;
@@ -96,7 +97,7 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 		auto loopCount = 0u;
 		for (auto n = DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = DIV_UP(n, SH_GROUP_SIZE)) ++loopCount;
 		m_cbSHSums = ConstantBuffer::MakeUnique();
-		N_RETURN(m_cbSHSums->Create(m_device.get(), sizeof(uint32_t[2]) * loopCount, loopCount,
+		N_RETURN(m_cbSHSums->Create(pDevice, sizeof(uint32_t[2]) * loopCount, loopCount,
 			nullptr, MemoryType::UPLOAD, MemoryFlag::NONE, L"CBSHSums"), false);
 
 		loopCount = 0;

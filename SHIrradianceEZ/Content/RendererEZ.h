@@ -9,7 +9,7 @@
 class RendererEZ
 {
 public:
-	RendererEZ(const XUSG::Device::sptr& device);
+	RendererEZ();
 	virtual ~RendererEZ();
 
 	bool Init(XUSG::CommandList* pCommandList, uint32_t width, uint32_t height,
@@ -64,8 +64,6 @@ protected:
 	void render(XUSG::EZ::CommandList* pCommandList, uint8_t frameIndex, bool needClear);
 	void environment(XUSG::EZ::CommandList* pCommandList, uint8_t frameIndex);
 	void temporalAA(XUSG::EZ::CommandList* pCommandList);
-
-	XUSG::Device::sptr m_device;
 
 	uint32_t	m_numIndices;
 	uint8_t		m_frameParity;
