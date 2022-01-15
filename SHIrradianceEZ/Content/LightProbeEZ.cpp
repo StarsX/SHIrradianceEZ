@@ -129,7 +129,7 @@ void LightProbeEZ::Process(EZ::CommandList* pCommandList, uint8_t frameIndex)
 {
 	// Set Descriptor pools
 	const uint8_t order = 3;
-	generateRadianceCompute(pCommandList, frameIndex);
+	generateRadiance(pCommandList, frameIndex);
 	shCubeMap(pCommandList, order);
 	shSum(pCommandList, order, frameIndex);
 	shNormalize(pCommandList, order);
@@ -147,18 +147,10 @@ StructuredBuffer::sptr LightProbeEZ::GetSH() const
 
 bool LightProbeEZ::createShaders()
 {
-	auto vsIndex = 0u;
-	auto psIndex = 0u;
 	auto csIndex = 0u;
 
-	N_RETURN(m_shaderPool->CreateShader(Shader::Stage::VS, vsIndex, L"VSScreenQuad.cso"), false);
-	m_shaders[VS_SCREEN_QUAD] = m_shaderPool->GetShader(Shader::Stage::VS, vsIndex++);
-
-	N_RETURN(m_shaderPool->CreateShader(Shader::Stage::PS, psIndex, L"PSGenRadiance.cso"), false);
-	m_shaders[PS_GEN_RADIANCE] = m_shaderPool->GetShader(Shader::Stage::PS, psIndex++);
-
 	N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSGenRadiance.cso"), false);
-	m_shaders[CS_GEN_RADIANCE] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
+	m_shaders[CS_RADIANCE_GEN] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
 
 	N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHCubeMap.cso"), false);
 	m_shaders[CS_SH_CUBE_MAP] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
@@ -172,58 +164,11 @@ bool LightProbeEZ::createShaders()
 	return true;
 }
 
-void LightProbeEZ::generateRadianceGraphics(EZ::CommandList* pCommandList, uint8_t frameIndex)
-{
-	// Set pipeline state
-	const auto state = pCommandList->GetGraphicsPipelineState();
-	state->SetShader(Shader::Stage::VS, m_shaders[VS_SCREEN_QUAD]);
-	state->SetShader(Shader::Stage::PS, m_shaders[PS_GEN_RADIANCE]);
-	state->OMSetNumRenderTargets(1);
-	state->OMSetRTVFormat(0, m_radiance->GetFormat());
-	pCommandList->DSSetState(Graphics::DEPTH_STENCIL_NONE);
-
-	// Set IA
-	pCommandList->IASetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
-
-	// Set CBV
-	const auto cbv = EZ::GetCBV(m_cbPerFrame.get(), frameIndex);
-	pCommandList->SetGraphicsResources(Shader::Stage::PS, DescriptorType::CBV, 0, 1, &cbv);
-
-	const auto numSources = static_cast<uint32_t>(m_sources.size());
-	const auto nextProbeIdx = (m_inputProbeIdx + 1) % numSources;
-	for (uint8_t i = 0; i < 6; ++i)
-	{
-		// Set render target
-		const auto rtv = EZ::GetRTV(m_radiance.get(), i);
-		pCommandList->OMSetRenderTargets(1, &rtv);
-
-		// Set CBV
-		const auto cbv = EZ::GetCBV(m_cbCubeMapSlices.get(), i);
-		pCommandList->SetGraphicsResources(Shader::Stage::PS, DescriptorType::CBV, 1, 1, &cbv);
-
-		// Set SRVs
-		const EZ::ResourceView srvs[] =
-		{
-			EZ::GetSRV(m_sources[m_inputProbeIdx].get()),
-			EZ::GetSRV(m_sources[nextProbeIdx].get())
-		};
-		pCommandList->SetGraphicsResources(Shader::Stage::PS, DescriptorType::SRV, 0,
-			static_cast<uint32_t>(size(srvs)), srvs);
-
-		// Set sampler
-		const auto sampler = SamplerPreset::LINEAR_WRAP;
-		pCommandList->SetGraphicsSamplerStates(0, 1, &sampler);
-
-		// Draw
-		pCommandList->Draw(3, 1, 0, 0);
-	}
-}
-
-void LightProbeEZ::generateRadianceCompute(EZ::CommandList* pCommandList, uint8_t frameIndex)
+void LightProbeEZ::generateRadiance(EZ::CommandList* pCommandList, uint8_t frameIndex)
 {
 	// Set pipeline state
 	const auto state = pCommandList->GetComputePipelineState();
-	state->SetShader(m_shaders[CS_GEN_RADIANCE]);
+	state->SetShader(m_shaders[CS_RADIANCE_GEN]);
 
 	// Set UAV
 	const auto uav = EZ::GetUAV(m_radiance.get());

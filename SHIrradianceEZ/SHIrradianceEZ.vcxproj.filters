@@ -156,9 +156,6 @@
     <FxCompile Include="Content\Shaders\PSPostprocess.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Content\Shaders\PSGenRadiance.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="Content\Shaders\CSGenRadiance.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>

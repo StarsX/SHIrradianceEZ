@@ -113,7 +113,7 @@ void LightProbe::Process(CommandList* pCommandList, uint8_t frameIndex)
 	pCommandList->SetDescriptorPools(static_cast<uint32_t>(size(descriptorPools)), descriptorPools);
 
 	const uint8_t order = 3;
-	generateRadianceCompute(pCommandList, frameIndex);
+	generateRadiance(pCommandList, frameIndex);
 	shCubeMap(pCommandList, order);
 	shSum(pCommandList, order);
 	shNormalize(pCommandList, order);
@@ -131,27 +131,14 @@ StructuredBuffer::sptr LightProbe::GetSH() const
 
 bool LightProbe::createPipelineLayouts()
 {
-	// Generate Radiance graphics
-	{
-		const auto utilPipelineLayout = Util::PipelineLayout::MakeUnique();
-		utilPipelineLayout->SetRange(0, DescriptorType::SAMPLER, 1, 0);
-		utilPipelineLayout->SetRootCBV(1, 0, 0, Shader::PS);
-		utilPipelineLayout->SetConstants(2, SizeOfInUint32(uint32_t), 1, 0, Shader::PS);
-		utilPipelineLayout->SetRange(3, DescriptorType::SRV, 2, 0);
-		utilPipelineLayout->SetShaderStage(0, Shader::PS);
-		utilPipelineLayout->SetShaderStage(3, Shader::PS);
-		X_RETURN(m_pipelineLayouts[GEN_RADIANCE_GRAPHICS], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutCache.get(), PipelineLayoutFlag::NONE, L"RadianceGenerationLayout"), false);
-	}
-
-	// Generate Radiance compute
+	// Generate radiance
 	{
 		const auto utilPipelineLayout = Util::PipelineLayout::MakeUnique();
 		utilPipelineLayout->SetRange(0, DescriptorType::SAMPLER, 1, 0);
 		utilPipelineLayout->SetRootCBV(1, 0);
 		utilPipelineLayout->SetRange(2, DescriptorType::UAV, 1, 0, 0, DescriptorFlag::DATA_STATIC_WHILE_SET_AT_EXECUTE);
 		utilPipelineLayout->SetRange(3, DescriptorType::SRV, 2, 0);
-		X_RETURN(m_pipelineLayouts[GEN_RADIANCE_COMPUTE], utilPipelineLayout->GetPipelineLayout(
+		X_RETURN(m_pipelineLayouts[RADIANCE_GEN], utilPipelineLayout->GetPipelineLayout(
 			m_pipelineLayoutCache.get(), PipelineLayoutFlag::NONE, L"RadianceGenerationLayout"), false);
 	}
 
@@ -194,34 +181,16 @@ bool LightProbe::createPipelineLayouts()
 
 bool LightProbe::createPipelines(Format rtFormat)
 {
-	auto vsIndex = 0u;
-	auto psIndex = 0u;
 	auto csIndex = 0u;
 
-	// Generate Radiance graphics
-	N_RETURN(m_shaderPool->CreateShader(Shader::Stage::VS, vsIndex, L"VSScreenQuad.cso"), false);
-	{
-		N_RETURN(m_shaderPool->CreateShader(Shader::Stage::PS, psIndex, L"PSGenRadiance.cso"), false);
-
-		const auto state = Graphics::State::MakeUnique();
-		state->SetPipelineLayout(m_pipelineLayouts[GEN_RADIANCE_GRAPHICS]);
-		state->SetShader(Shader::Stage::VS, m_shaderPool->GetShader(Shader::Stage::VS, vsIndex));
-		state->SetShader(Shader::Stage::PS, m_shaderPool->GetShader(Shader::Stage::PS, psIndex++));
-		state->DSSetState(Graphics::DEPTH_STENCIL_NONE, m_graphicsPipelineCache.get());
-		state->IASetPrimitiveTopologyType(PrimitiveTopologyType::TRIANGLE);
-		state->OMSetNumRenderTargets(1);
-		state->OMSetRTVFormat(0, rtFormat);
-		X_RETURN(m_pipelines[GEN_RADIANCE_GRAPHICS], state->GetPipeline(m_graphicsPipelineCache.get(), L"RadianceGeneration_graphics"), false);
-	}
-
-	// Generate Radiance compute
+	// Generate radiance
 	{
 		N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSGenRadiance.cso"), false);
 
 		const auto state = Compute::State::MakeUnique();
-		state->SetPipelineLayout(m_pipelineLayouts[GEN_RADIANCE_COMPUTE]);
+		state->SetPipelineLayout(m_pipelineLayouts[RADIANCE_GEN]);
 		state->SetShader(m_shaderPool->GetShader(Shader::Stage::CS, csIndex++));
-		X_RETURN(m_pipelines[GEN_RADIANCE_COMPUTE], state->GetPipeline(m_computePipelineCache.get(), L"RadianceGeneration_compute"), false);
+		X_RETURN(m_pipelines[RADIANCE_GEN], state->GetPipeline(m_computePipelineCache.get(), L"RadianceGeneration_compute"), false);
 	}
 
 	// SH cube map transform
@@ -304,30 +273,17 @@ bool LightProbe::createDescriptorTables()
 	return true;
 }
 
-void LightProbe::generateRadianceGraphics(CommandList* pCommandList, uint8_t frameIndex)
-{
-	ResourceBarrier barrier;
-	const auto numBarriers = m_radiance->SetBarrier(&barrier, ResourceState::RENDER_TARGET);
-	pCommandList->Barrier(numBarriers, &barrier);
-
-	pCommandList->SetGraphicsPipelineLayout(m_pipelineLayouts[GEN_RADIANCE_GRAPHICS]);
-	pCommandList->SetGraphicsRootConstantBufferView(1, m_cbPerFrame.get(), m_cbPerFrame->GetCBVOffset(frameIndex));
-
-	m_radiance->Blit(pCommandList, m_srvTables[SRV_TABLE_INPUT][m_inputProbeIdx], 3, 0, 0, 0,
-		m_samplerTable, 0, m_pipelines[GEN_RADIANCE_GRAPHICS]);
-}
-
-void LightProbe::generateRadianceCompute(CommandList* pCommandList, uint8_t frameIndex)
+void LightProbe::generateRadiance(CommandList* pCommandList, uint8_t frameIndex)
 {
 	ResourceBarrier barrier;
 	const auto numBarriers = m_radiance->SetBarrier(&barrier, ResourceState::UNORDERED_ACCESS);
 	pCommandList->Barrier(numBarriers, &barrier);
 
-	pCommandList->SetComputePipelineLayout(m_pipelineLayouts[GEN_RADIANCE_COMPUTE]);
+	pCommandList->SetComputePipelineLayout(m_pipelineLayouts[RADIANCE_GEN]);
 	pCommandList->SetComputeRootConstantBufferView(1, m_cbPerFrame.get(), m_cbPerFrame->GetCBVOffset(frameIndex));
 
 	m_radiance->AsTexture()->Blit(pCommandList, 8, 8, 1, m_uavTable, 2, 0,
-		m_srvTables[SRV_TABLE_INPUT][m_inputProbeIdx], 3, m_samplerTable, 0, m_pipelines[GEN_RADIANCE_COMPUTE]);
+		m_srvTables[SRV_TABLE_INPUT][m_inputProbeIdx], 3, m_samplerTable, 0, m_pipelines[RADIANCE_GEN]);
 }
 
 void LightProbe::shCubeMap(CommandList* pCommandList, uint8_t order)

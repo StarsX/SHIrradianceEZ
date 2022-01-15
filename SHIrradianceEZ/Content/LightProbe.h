@@ -30,8 +30,7 @@ public:
 protected:
 	enum PipelineIndex : uint8_t
 	{
-		GEN_RADIANCE_GRAPHICS,
-		GEN_RADIANCE_COMPUTE,
+		RADIANCE_GEN,
 		SH_CUBE_MAP,
 		SH_SUM,
 		SH_NORMALIZE,
@@ -51,8 +50,7 @@ protected:
 	bool createPipelines(XUSG::Format rtFormat);
 	bool createDescriptorTables();
 
-	void generateRadianceGraphics(XUSG::CommandList* pCommandList, uint8_t frameIndex);
-	void generateRadianceCompute(XUSG::CommandList* pCommandList, uint8_t frameIndex);
+	void generateRadiance(XUSG::CommandList* pCommandList, uint8_t frameIndex);
 	void shCubeMap(XUSG::CommandList* pCommandList, uint8_t order);
 	void shSum(XUSG::CommandList* pCommandList, uint8_t order);
 	void shNormalize(XUSG::CommandList* pCommandList, uint8_t order);

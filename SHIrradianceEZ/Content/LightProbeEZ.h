@@ -29,9 +29,7 @@ public:
 protected:
 	enum ShaderIndex : uint8_t
 	{
-		VS_SCREEN_QUAD,
-		PS_GEN_RADIANCE,
-		CS_GEN_RADIANCE,
+		CS_RADIANCE_GEN,
 		CS_SH_CUBE_MAP,
 		CS_SH_SUM,
 		CS_SH_NORMALIZE,
@@ -41,8 +39,7 @@ protected:
 
 	bool createShaders();
 
-	void generateRadianceGraphics(XUSG::EZ::CommandList* pCommandList, uint8_t frameIndex);
-	void generateRadianceCompute(XUSG::EZ::CommandList* pCommandList, uint8_t frameIndex);
+	void generateRadiance(XUSG::EZ::CommandList* pCommandList, uint8_t frameIndex);
 	void shCubeMap(XUSG::EZ::CommandList* pCommandList, uint8_t order);
 	void shSum(XUSG::EZ::CommandList* pCommandList, uint8_t order, uint8_t frameIndex);
 	void shNormalize(XUSG::EZ::CommandList* pCommandList, uint8_t order);
