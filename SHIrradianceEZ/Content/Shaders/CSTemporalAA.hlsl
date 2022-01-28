@@ -181,7 +181,7 @@ HALF4 NeighborMinMax(out HALF4 neighborMin, out HALF4 neighborMax,
 #ifndef _ALPHA_AS_ID_
 	current.w = current.w < ALPHA_BOUND ? 0.0 : 1.0;
 #elif _VARIANCE_AABB_ && defined(_DENOISER_)
-	const HALF centerMask = current.w;
+	const HALF alpha = current.w;
 #endif
 
 #if	_VARIANCE_AABB_
@@ -214,7 +214,7 @@ HALF4 NeighborMinMax(out HALF4 neighborMin, out HALF4 neighborMax,
 
 #if	_VARIANCE_AABB_
 #if defined(_DENOISER_) && defined(_ALPHA_AS_ID_)
-	gamma = abs(centerMask - current.w) < 1.0 / 255.0 ? gamma : 1.0;
+	gamma = abs(alpha - current.w) < 1.0 / 255.0 ? gamma : 1.0;
 #endif
 	mu /= NUM_SAMPLES;
 	const HALF3 sigma = sqrt(abs(m2 / NUM_SAMPLES - mu * mu));
