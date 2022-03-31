@@ -167,8 +167,8 @@ bool LightProbeEZ::createShaders()
 void LightProbeEZ::generateRadiance(EZ::CommandList* pCommandList, uint8_t frameIndex)
 {
 	// Set pipeline state
-	const auto state = pCommandList->GetComputePipelineState();
-	state->SetShader(m_shaders[CS_RADIANCE_GEN]);
+	const auto pState = pCommandList->GetComputePipelineState();
+	pState->SetShader(m_shaders[CS_RADIANCE_GEN]);
 
 	// Set UAV
 	const auto uav = EZ::GetUAV(m_radiance.get());
@@ -199,8 +199,8 @@ void LightProbeEZ::generateRadiance(EZ::CommandList* pCommandList, uint8_t frame
 void LightProbeEZ::shCubeMap(EZ::CommandList* pCommandList, uint8_t order)
 {
 	// Set pipeline state
-	const auto state = pCommandList->GetComputePipelineState();
-	state->SetShader(m_shaders[CS_SH_CUBE_MAP]);
+	const auto pState = pCommandList->GetComputePipelineState();
+	pState->SetShader(m_shaders[CS_SH_CUBE_MAP]);
 
 	// Set UAVs
 	const EZ::ResourceView uavs[] =
@@ -233,8 +233,8 @@ void LightProbeEZ::shSum(EZ::CommandList* pCommandList, uint8_t order, uint8_t f
 	m_shBufferParity = 0;
 
 	// Set pipeline state
-	const auto state = pCommandList->GetComputePipelineState();
-	state->SetShader(m_shaders[CS_SH_SUM]);
+	const auto pState = pCommandList->GetComputePipelineState();
+	pState->SetShader(m_shaders[CS_SH_SUM]);
 
 	auto i = 0u;
 	for (auto n = DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = DIV_UP(n, SH_GROUP_SIZE))
@@ -276,8 +276,8 @@ void LightProbeEZ::shNormalize(EZ::CommandList* pCommandList, uint8_t order)
 	const uint8_t dst = !m_shBufferParity;
 
 	// Set pipeline state
-	const auto state = pCommandList->GetComputePipelineState();
-	state->SetShader(m_shaders[CS_SH_NORMALIZE]);
+	const auto pState = pCommandList->GetComputePipelineState();
+	pState->SetShader(m_shaders[CS_SH_NORMALIZE]);
 
 	// Set UAV
 	const auto uav = EZ::GetUAV(m_coeffSH[dst].get());

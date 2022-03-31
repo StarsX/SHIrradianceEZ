@@ -237,14 +237,14 @@ void RendererEZ::createInputLayout()
 void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool needClear)
 {
 	// Set pipeline state
-	const auto state = pCommandList->GetGraphicsPipelineState();
-	state->IASetInputLayout(&m_inputLayout);
-	state->SetShader(Shader::Stage::VS, m_shaders[VS_BASE_PASS]);
-	state->SetShader(Shader::Stage::PS, m_shaders[PS_BASE_PASS]);
-	state->OMSetNumRenderTargets(NUM_RENDER_TARGET);
-	state->OMSetRTVFormat(RT_COLOR, Format::R16G16B16A16_FLOAT);
-	state->OMSetRTVFormat(RT_VELOCITY, Format::R16G16_FLOAT);
-	state->OMSetDSVFormat(Format::D24_UNORM_S8_UINT);
+	const auto pState = pCommandList->GetGraphicsPipelineState();
+	pState->IASetInputLayout(&m_inputLayout);
+	pState->SetShader(Shader::Stage::VS, m_shaders[VS_BASE_PASS]);
+	pState->SetShader(Shader::Stage::PS, m_shaders[PS_BASE_PASS]);
+	pState->OMSetNumRenderTargets(NUM_RENDER_TARGET);
+	pState->OMSetRTVFormat(RT_COLOR, Format::R16G16B16A16_FLOAT);
+	pState->OMSetRTVFormat(RT_VELOCITY, Format::R16G16_FLOAT);
+	pState->OMSetDSVFormat(Format::D24_UNORM_S8_UINT);
 	pCommandList->DSSetState(Graphics::DEFAULT_LESS);
 
 	// Set render targets
@@ -279,7 +279,7 @@ void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool 
 	pCommandList->SetGraphicsResources(Shader::Stage::VS, DescriptorType::CBV, 0, 1, &cbvBasePass);
 
 	const auto cbvPerFrame = EZ::GetCBV(m_cbPerFrame.get(), frameIndex);
-	pCommandList->SetGraphicsResources(Shader::Stage::PS, DescriptorType::CBV, 0, 1, & cbvPerFrame);
+	pCommandList->SetGraphicsResources(Shader::Stage::PS, DescriptorType::CBV, 0, 1, &cbvPerFrame);
 
 	// Set SRVs
 	const EZ::ResourceView srvs[] =
@@ -300,13 +300,13 @@ void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool 
 void RendererEZ::environment(EZ::CommandList* pCommandList, uint8_t frameIndex)
 {
 	// Set pipeline state
-	const auto state = pCommandList->GetGraphicsPipelineState();
-	state->SetShader(Shader::Stage::VS, m_shaders[VS_SCREEN_QUAD]);
-	state->SetShader(Shader::Stage::PS, m_shaders[PS_ENVIRONMENT]);
-	state->OMSetNumRenderTargets(1);
-	state->OMSetRTVFormat(RT_COLOR, Format::R16G16B16A16_FLOAT);
-	state->OMSetRTVFormat(RT_VELOCITY, Format::UNKNOWN);
-	state->OMSetDSVFormat(Format::D24_UNORM_S8_UINT);
+	const auto pState = pCommandList->GetGraphicsPipelineState();
+	pState->SetShader(Shader::Stage::VS, m_shaders[VS_SCREEN_QUAD]);
+	pState->SetShader(Shader::Stage::PS, m_shaders[PS_ENVIRONMENT]);
+	pState->OMSetNumRenderTargets(1);
+	pState->OMSetRTVFormat(RT_COLOR, Format::R16G16B16A16_FLOAT);
+	pState->OMSetRTVFormat(RT_VELOCITY, Format::UNKNOWN);
+	pState->OMSetDSVFormat(Format::D24_UNORM_S8_UINT);
 	pCommandList->DSSetState(Graphics::DEPTH_READ_LESS_EQUAL);
 
 	// Set render target
@@ -338,8 +338,8 @@ void RendererEZ::environment(EZ::CommandList* pCommandList, uint8_t frameIndex)
 void RendererEZ::temporalAA(EZ::CommandList* pCommandList)
 {
 	// Set pipeline state
-	const auto state = pCommandList->GetComputePipelineState();
-	state->SetShader(m_shaders[CS_TEMPORAL_AA]);
+	const auto pState = pCommandList->GetComputePipelineState();
+	pState->SetShader(m_shaders[CS_TEMPORAL_AA]);
 
 	// Set UAVs
 	const auto uav = EZ::GetUAV(m_outputViews[UAV_PP_TAA + m_frameParity].get());
