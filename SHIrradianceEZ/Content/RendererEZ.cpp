@@ -146,8 +146,6 @@ void RendererEZ::Postprocess(EZ::CommandList* pCommandList, RenderTarget* pRende
 	state->SetShader(Shader::Stage::VS, m_shaders[VS_SCREEN_QUAD]);
 	state->SetShader(Shader::Stage::PS, m_shaders[PS_POSTPROCESS]);
 	state->IASetPrimitiveTopologyType(PrimitiveTopologyType::TRIANGLE);
-	state->OMSetNumRenderTargets(1);
-	state->OMSetRTVFormat(0, pRenderTarget->GetFormat());
 	pCommandList->DSSetState(Graphics::DEPTH_STENCIL_NONE);
 
 	// Set render target
@@ -241,10 +239,6 @@ void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool 
 	pState->IASetInputLayout(&m_inputLayout);
 	pState->SetShader(Shader::Stage::VS, m_shaders[VS_BASE_PASS]);
 	pState->SetShader(Shader::Stage::PS, m_shaders[PS_BASE_PASS]);
-	pState->OMSetNumRenderTargets(NUM_RENDER_TARGET);
-	pState->OMSetRTVFormat(RT_COLOR, Format::R16G16B16A16_FLOAT);
-	pState->OMSetRTVFormat(RT_VELOCITY, Format::R16G16_FLOAT);
-	pState->OMSetDSVFormat(Format::D24_UNORM_S8_UINT);
 	pCommandList->DSSetState(Graphics::DEFAULT_LESS);
 
 	// Set render targets
@@ -303,10 +297,6 @@ void RendererEZ::environment(EZ::CommandList* pCommandList, uint8_t frameIndex)
 	const auto pState = pCommandList->GetGraphicsPipelineState();
 	pState->SetShader(Shader::Stage::VS, m_shaders[VS_SCREEN_QUAD]);
 	pState->SetShader(Shader::Stage::PS, m_shaders[PS_ENVIRONMENT]);
-	pState->OMSetNumRenderTargets(1);
-	pState->OMSetRTVFormat(RT_COLOR, Format::R16G16B16A16_FLOAT);
-	pState->OMSetRTVFormat(RT_VELOCITY, Format::UNKNOWN);
-	pState->OMSetDSVFormat(Format::D24_UNORM_S8_UINT);
 	pCommandList->DSSetState(Graphics::DEPTH_READ_LESS_EQUAL);
 
 	// Set render target
