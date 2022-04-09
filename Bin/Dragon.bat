@@ -1,1 +1,1 @@
-start IrradianceMap.exe -mesh Assets/dragon.obj
+start SHIrradianceEZ.exe -mesh Assets/dragon.obj

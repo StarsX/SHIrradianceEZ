@@ -142,7 +142,7 @@ void SHIrradianceEZ::LoadAssets()
 		m_commandAllocators[m_frameIndex].get(), nullptr), ThrowIfFailed(E_FAIL));
 
 	m_commandListEZ = EZ::CommandList::MakeUnique();
-	N_RETURN(m_commandListEZ->Create(pCommandList, 3, 52),
+	N_RETURN(m_commandListEZ->Create(pCommandList, 3, 64),
 		ThrowIfFailed(E_FAIL));
 
 	vector<Resource::uptr> uploaders(0);	
