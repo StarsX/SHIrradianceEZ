@@ -1,1 +1,1 @@
-start IrradianceMap.exe -mesh Assets/Venusm.obj 0.0 0.0 0.0 0.003
+start SHIrradianceEZ.exe -mesh Assets/Venusm.obj 0.0 0.0 0.0 0.003
