@@ -142,10 +142,8 @@ void RendererEZ::Render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool 
 void RendererEZ::Postprocess(EZ::CommandList* pCommandList, RenderTarget* pRenderTarget)
 {
 	// Set pipeline state
-	const auto state = pCommandList->GetGraphicsPipelineState();
-	state->SetShader(Shader::Stage::VS, m_shaders[VS_SCREEN_QUAD]);
-	state->SetShader(Shader::Stage::PS, m_shaders[PS_POSTPROCESS]);
-	state->IASetPrimitiveTopologyType(PrimitiveTopologyType::TRIANGLE);
+	pCommandList->SetGraphicsShader(Shader::Stage::VS, m_shaders[VS_SCREEN_QUAD]);
+	pCommandList->SetGraphicsShader(Shader::Stage::PS, m_shaders[PS_POSTPROCESS]);
 	pCommandList->DSSetState(Graphics::DEPTH_STENCIL_NONE);
 
 	// Set render target
@@ -235,10 +233,9 @@ void RendererEZ::createInputLayout()
 void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool needClear)
 {
 	// Set pipeline state
-	const auto pState = pCommandList->GetGraphicsPipelineState();
-	pState->IASetInputLayout(&m_inputLayout);
-	pState->SetShader(Shader::Stage::VS, m_shaders[VS_BASE_PASS]);
-	pState->SetShader(Shader::Stage::PS, m_shaders[PS_BASE_PASS]);
+	pCommandList->IASetInputLayout(&m_inputLayout);
+	pCommandList->SetGraphicsShader(Shader::Stage::VS, m_shaders[VS_BASE_PASS]);
+	pCommandList->SetGraphicsShader(Shader::Stage::PS, m_shaders[PS_BASE_PASS]);
 	pCommandList->DSSetState(Graphics::DEFAULT_LESS);
 
 	// Set render targets
@@ -294,9 +291,8 @@ void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool 
 void RendererEZ::environment(EZ::CommandList* pCommandList, uint8_t frameIndex)
 {
 	// Set pipeline state
-	const auto pState = pCommandList->GetGraphicsPipelineState();
-	pState->SetShader(Shader::Stage::VS, m_shaders[VS_SCREEN_QUAD]);
-	pState->SetShader(Shader::Stage::PS, m_shaders[PS_ENVIRONMENT]);
+	pCommandList->SetGraphicsShader(Shader::Stage::VS, m_shaders[VS_SCREEN_QUAD]);
+	pCommandList->SetGraphicsShader(Shader::Stage::PS, m_shaders[PS_ENVIRONMENT]);
 	pCommandList->DSSetState(Graphics::DEPTH_READ_LESS_EQUAL);
 
 	// Set render target
@@ -328,8 +324,7 @@ void RendererEZ::environment(EZ::CommandList* pCommandList, uint8_t frameIndex)
 void RendererEZ::temporalAA(EZ::CommandList* pCommandList)
 {
 	// Set pipeline state
-	const auto pState = pCommandList->GetComputePipelineState();
-	pState->SetShader(m_shaders[CS_TEMPORAL_AA]);
+	pCommandList->SetComputeShader(m_shaders[CS_TEMPORAL_AA]);
 
 	// Set UAVs
 	const auto uav = EZ::GetUAV(m_outputViews[UAV_PP_TAA + m_frameParity].get());
