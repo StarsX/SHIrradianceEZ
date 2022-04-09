@@ -35,7 +35,7 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 		DDS::AlphaMode alphaMode;
 
 		uploaders.emplace_back(Resource::MakeUnique());
-		N_RETURN(textureLoader.CreateTextureFromFile(pCommandList, pFileNames[i].c_str(),
+		XUSG_N_RETURN(textureLoader.CreateTextureFromFile(pCommandList, pFileNames[i].c_str(),
 			8192, false, m_sources[i], uploaders.back().get(), &alphaMode), false);
 
 		texWidth = (max)(static_cast<uint32_t>(m_sources[i]->GetWidth()), texWidth);
@@ -50,8 +50,8 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 		MemoryFlag::NONE, L"Radiance");
 
 	m_numSHTexels = SH_TEX_SIZE * SH_TEX_SIZE * 6;
-	const auto numGroups = DIV_UP(m_numSHTexels, SH_GROUP_SIZE);
-	const auto numSumGroups = DIV_UP(numGroups, SH_GROUP_SIZE);
+	const auto numGroups = XUSG_DIV_UP(m_numSHTexels, SH_GROUP_SIZE);
+	const auto numSumGroups = XUSG_DIV_UP(numGroups, SH_GROUP_SIZE);
 	const auto maxElements = SH_MAX_ORDER * SH_MAX_ORDER * numGroups;
 	const auto maxSumElements = SH_MAX_ORDER * SH_MAX_ORDER * numSumGroups;
 	m_coeffSH[0] = StructuredBuffer::MakeShared();
@@ -73,12 +73,12 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 
 	// Create constant buffers
 	m_cbPerFrame = ConstantBuffer::MakeUnique();
-	N_RETURN(m_cbPerFrame->Create(pDevice, sizeof(float[FrameCount]), FrameCount,
+	XUSG_N_RETURN(m_cbPerFrame->Create(pDevice, sizeof(float[FrameCount]), FrameCount,
 		nullptr, MemoryType::UPLOAD, MemoryFlag::NONE, L"CBPerFrame"), false);
 
 	{
 		m_cbCubeMapSlices = ConstantBuffer::MakeUnique();
-		N_RETURN(m_cbCubeMapSlices->Create(pDevice, sizeof(uint32_t[6]), 6, nullptr,
+		XUSG_N_RETURN(m_cbCubeMapSlices->Create(pDevice, sizeof(uint32_t[6]), 6, nullptr,
 			MemoryType::UPLOAD, MemoryFlag::NONE, L"Slices"), false);
 		
 		for (uint8_t i = 0; i < 6; ++i)
@@ -87,7 +87,7 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 
 	{
 		m_cbSHCubeMap = ConstantBuffer::MakeUnique();
-		N_RETURN(m_cbSHCubeMap->Create(pDevice, sizeof(uint32_t[2]), 1, nullptr,
+		XUSG_N_RETURN(m_cbSHCubeMap->Create(pDevice, sizeof(uint32_t[2]), 1, nullptr,
 			MemoryType::UPLOAD, MemoryFlag::NONE, L"CBSHCubeMap"), false);
 
 		reinterpret_cast<uint32_t*>(m_cbSHCubeMap->Map())[1] = SH_TEX_SIZE;
@@ -95,18 +95,18 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 
 	{
 		auto loopCount = 0u;
-		for (auto n = DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = DIV_UP(n, SH_GROUP_SIZE)) ++loopCount;
+		for (auto n = XUSG_DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = XUSG_DIV_UP(n, SH_GROUP_SIZE)) ++loopCount;
 		m_cbSHSums = ConstantBuffer::MakeUnique();
-		N_RETURN(m_cbSHSums->Create(pDevice, sizeof(uint32_t[2]) * loopCount, loopCount,
+		XUSG_N_RETURN(m_cbSHSums->Create(pDevice, sizeof(uint32_t[2]) * loopCount, loopCount,
 			nullptr, MemoryType::UPLOAD, MemoryFlag::NONE, L"CBSHSums"), false);
 
 		loopCount = 0;
-		for (auto n = DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = DIV_UP(n, SH_GROUP_SIZE))
+		for (auto n = XUSG_DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = XUSG_DIV_UP(n, SH_GROUP_SIZE))
 			reinterpret_cast<uint32_t*>(m_cbSHSums->Map(loopCount++))[1] = n;
 	}
 
 	// Create shaders
-	N_RETURN(createShaders(), false);
+	XUSG_N_RETURN(createShaders(), false);
 
 	return true;
 }
@@ -149,16 +149,16 @@ bool LightProbeEZ::createShaders()
 {
 	auto csIndex = 0u;
 
-	N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSGenRadiance.cso"), false);
+	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSGenRadiance.cso"), false);
 	m_shaders[CS_RADIANCE_GEN] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
 
-	N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHCubeMap.cso"), false);
+	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHCubeMap.cso"), false);
 	m_shaders[CS_SH_CUBE_MAP] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
 
-	N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHSum.cso"), false);
+	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHSum.cso"), false);
 	m_shaders[CS_SH_SUM] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
 
-	N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHNormalize.cso"), false);
+	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHNormalize.cso"), false);
 	m_shaders[CS_SH_NORMALIZE] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
 
 	return true;
@@ -192,7 +192,7 @@ void LightProbeEZ::generateRadiance(EZ::CommandList* pCommandList, uint8_t frame
 
 	const auto w = static_cast<uint32_t>(m_radiance->GetWidth());
 	const auto h = m_radiance->GetHeight();
-	pCommandList->Dispatch(DIV_UP(w, 8), DIV_UP(h, 8), 6);
+	pCommandList->Dispatch(XUSG_DIV_UP(w, 8), XUSG_DIV_UP(h, 8), 6);
 }
 
 void LightProbeEZ::shCubeMap(EZ::CommandList* pCommandList, uint8_t order)
@@ -222,7 +222,7 @@ void LightProbeEZ::shCubeMap(EZ::CommandList* pCommandList, uint8_t order)
 	const auto sampler = SamplerPreset::LINEAR_WRAP;
 	pCommandList->SetComputeSamplerStates(0, 1, &sampler);
 
-	pCommandList->Dispatch(DIV_UP(m_numSHTexels, SH_GROUP_SIZE), 1, 1);
+	pCommandList->Dispatch(XUSG_DIV_UP(m_numSHTexels, SH_GROUP_SIZE), 1, 1);
 }
 
 void LightProbeEZ::shSum(EZ::CommandList* pCommandList, uint8_t order, uint8_t frameIndex)
@@ -234,7 +234,7 @@ void LightProbeEZ::shSum(EZ::CommandList* pCommandList, uint8_t order, uint8_t f
 	pCommandList->SetComputeShader(m_shaders[CS_SH_SUM]);
 
 	auto i = 0u;
-	for (auto n = DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = DIV_UP(n, SH_GROUP_SIZE))
+	for (auto n = XUSG_DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = XUSG_DIV_UP(n, SH_GROUP_SIZE))
 	{
 		const auto& src = m_shBufferParity;
 		const uint8_t dst = !m_shBufferParity;
@@ -261,7 +261,7 @@ void LightProbeEZ::shSum(EZ::CommandList* pCommandList, uint8_t order, uint8_t f
 		const auto cbv = EZ::GetCBV(m_cbSHSums.get());
 		pCommandList->SetComputeResources(DescriptorType::CBV, 0, 1, &cbv);
 
-		pCommandList->Dispatch(DIV_UP(n, SH_GROUP_SIZE), order * order, 1);
+		pCommandList->Dispatch(XUSG_DIV_UP(n, SH_GROUP_SIZE), order * order, 1);
 		m_shBufferParity = !m_shBufferParity;
 	}
 }
@@ -288,6 +288,6 @@ void LightProbeEZ::shNormalize(EZ::CommandList* pCommandList, uint8_t order)
 	pCommandList->SetComputeResources(DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
 
 	const auto numElements = order * order;
-	pCommandList->Dispatch(DIV_UP(numElements, SH_GROUP_SIZE), 1, 1);
+	pCommandList->Dispatch(XUSG_DIV_UP(numElements, SH_GROUP_SIZE), 1, 1);
 	m_shBufferParity = !m_shBufferParity;
 }
