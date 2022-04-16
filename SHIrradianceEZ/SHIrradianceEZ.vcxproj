@@ -65,7 +65,7 @@ COPY /Y "$(OutDir)*.exe" "$(ProjectDir)..\Bin\"
 COPY /Y "$(ProjectDir)XUSG\Bin\$(Platform)\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"</Command>
     </PostBuildEvent>
     <FxCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)Content</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Content;$(ProjectDir)XUSG\Advanced</AdditionalIncludeDirectories>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -94,7 +94,7 @@ COPY /Y "$(OutDir)*.exe" "$(ProjectDir)..\Bin\"
 COPY /Y "$(ProjectDir)XUSG\Bin\$(Platform)\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"</Command>
     </PostBuildEvent>
     <FxCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)Content</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Content;$(ProjectDir)XUSG\Advanced</AdditionalIncludeDirectories>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -109,10 +109,10 @@ COPY /Y "$(ProjectDir)XUSG\Bin\$(Platform)\$(Configuration)\*.dll" "$(ProjectDir
     <ClInclude Include="Content\LightProbeEZ.h" />
     <ClInclude Include="Content\Renderer.h" />
     <ClInclude Include="Content\RendererEZ.h" />
-    <ClInclude Include="Content\SHSharedConsts.h" />
     <ClInclude Include="SHIrradianceEZ.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="XUSG\Advanced\XUSGDDSLoader.h" />
+    <ClInclude Include="XUSG\Advanced\XUSGSHSharedConsts.h" />
     <ClInclude Include="XUSG\Core\XUSG.h" />
     <ClInclude Include="XUSG\Helper\XUSG-EZ.h" />
     <ClInclude Include="XUSG\Optional\XUSGObjLoader.h" />

@@ -11,7 +11,8 @@ StructuredBuffer<float> g_roWeight;
 [numthreads(32, 1, 1)]
 void main(uint DTid : SV_DispatchThreadID)
 {
-	const float normProj = 4.0 * PI / g_roWeight[0];
+	const float wt = g_roWeight[0];
+	const float normProj = wt > 0.0 ? 4.0 * PI / wt : 0.0;
 
 	g_rwSHResult[DTid] = g_roSHBuff[DTid] * normProj;
 }

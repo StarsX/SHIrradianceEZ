@@ -4,21 +4,32 @@
 
 #include "SHMath.hlsli"
 #include "CubeMap.hlsli"
+#include "CSWaveOP.hlsli"
 
+//--------------------------------------------------------------------------------------
+// Constant buffer
+//--------------------------------------------------------------------------------------
 cbuffer cb
 {
 	uint g_order;
 	uint g_mapSize;
 };
 
-TextureCube<float3> g_txCubeMap;
+//--------------------------------------------------------------------------------------
+// Buffers and texture
+//--------------------------------------------------------------------------------------
 RWStructuredBuffer<float3> g_rwSHBuff;
 RWStructuredBuffer<float> g_rwWeight;
+TextureCube<float3> g_txCubeMap;
 
+//--------------------------------------------------------------------------------------
+// Texture sampler
+//--------------------------------------------------------------------------------------
 SamplerState g_sampler;
 
-groupshared float4 g_smem[SH_WAVE_SIZE];
-
+//--------------------------------------------------------------------------------------
+// Compute shader that performs spherical-harmonics transform from a cube map
+//--------------------------------------------------------------------------------------
 [numthreads(SH_GROUP_SIZE, 1, 1)]
 void main(uint DTid : SV_DispatchThreadID, uint GTid : SV_GroupThreadID, uint Gid : SV_GroupID)
 {
@@ -45,16 +56,16 @@ void main(uint DTid : SV_DispatchThreadID, uint GTid : SV_GroupThreadID, uint Gi
 	const float2 uv = idx.xy * s + b;
 	const float diff = 1.0 + dot(uv, uv);
 	const float diffSolid = 4.0 / (diff * sqrt(diff));
-	float wt = WaveActiveSum(diffSolid);
+	float wt = WaveLaneSum(GTid, diffSolid);
 #if SH_GROUP_SIZE > SH_WAVE_SIZE
-	if (WaveIsFirstLane()) g_smem[GTid / WaveGetLaneCount()].w = wt;
+	if (GTid % WaveGetLaneCount() == 0) g_smem[GTid / WaveGetLaneCount()].w = wt;
 
 	GroupMemoryBarrierWithGroupSync();
 
 	if (GTid < WaveGetLaneCount())
 	{
 		wt = g_smem[GTid].w;
-		wt = WaveActiveSum(wt);
+		wt = WaveLaneSum(GTid, wt);
 	}
 #endif
 	if (GTid == 0) g_rwWeight[Gid] = wt;
@@ -68,16 +79,16 @@ void main(uint DTid : SV_DispatchThreadID, uint GTid : SV_GroupThreadID, uint Gi
 
 	for (uint i = 0; i < n; ++i)
 	{
-		float3 sh = WaveActiveSum(shBuffB[i]);
+		float3 sh = WaveLaneSum(GTid, shBuffB[i]);
 #if SH_GROUP_SIZE > SH_WAVE_SIZE
-		if (WaveIsFirstLane()) g_smem[GTid / WaveGetLaneCount()].xyz = sh;
+		if (GTid % WaveGetLaneCount() == 0) g_smem[GTid / WaveGetLaneCount()].xyz = sh;
 			
 		GroupMemoryBarrierWithGroupSync();
 
 		if (GTid < WaveGetLaneCount())
 		{
 			sh = g_smem[GTid].xyz;
-			sh = WaveActiveSum(sh);
+			sh = WaveLaneSum(GTid, sh);
 		}
 #endif
 		if (GTid == 0) g_rwSHBuff[GetLocation(n, uint2(Gid, i))] = sh;
