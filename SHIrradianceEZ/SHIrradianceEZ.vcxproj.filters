@@ -87,7 +87,7 @@
     <ClInclude Include="Content\RendererEZ.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Content\SHSharedConsts.h">
+    <ClInclude Include="XUSG\Advanced\XUSGSHSharedConsts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -127,10 +127,10 @@
     <None Include="Content\Shaders\SHMath.hlsli">
       <Filter>Shaders\SHMath</Filter>
     </None>
-    <None Include="Content\Shaders\CubeMap.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="Content\Shaders\SHIrradiance.hlsli">
+      <Filter>Shaders\SHMath</Filter>
+    </None>
+    <None Include="Content\Shaders\CubeMap.hlsli">
       <Filter>Shaders\SHMath</Filter>
     </None>
   </ItemGroup>

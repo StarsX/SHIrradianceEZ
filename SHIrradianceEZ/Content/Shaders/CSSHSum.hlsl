@@ -3,7 +3,11 @@
 //--------------------------------------------------------------------------------------
 
 #include "SHMath.hlsli"
+#include "CSWaveOP.hlsli"
 
+//--------------------------------------------------------------------------------------
+// Constant buffer
+//--------------------------------------------------------------------------------------
 cbuffer cb
 {
 	uint g_order;
@@ -18,12 +22,8 @@ RWStructuredBuffer<float> g_rwWeight;
 StructuredBuffer<float3> g_roSHBuff;
 StructuredBuffer<float> g_roWeight;
 
-#if SH_GROUP_SIZE > SH_WAVE_SIZE
-groupshared float4 g_smem[SH_WAVE_SIZE];
-#endif
-
 //--------------------------------------------------------------------------------------
-// Compute shader
+// Compute shader that performs group reduction of sum
 //--------------------------------------------------------------------------------------
 [numthreads(SH_GROUP_SIZE, 1, 1)]
 void main(uint2 DTid : SV_DispatchThreadID, uint GTid : SV_GroupThreadID, uint2 Gid : SV_GroupID)
@@ -35,18 +35,19 @@ void main(uint2 DTid : SV_DispatchThreadID, uint GTid : SV_GroupThreadID, uint2 
 	{
 		sh.xyz = g_roSHBuff[GetLocation(n, DTid)];
 		if (Gid.y == 0) sh.w = g_roWeight[DTid.x];
-		sh = WaveActiveSum(sh);
 	}
 
+	sh = WaveLaneSum(GTid, sh);
+
 #if SH_GROUP_SIZE > SH_WAVE_SIZE
-	if (WaveIsFirstLane()) g_smem[GTid / WaveGetLaneCount()] = sh;
+	if (GTid % WaveGetLaneCount() == 0) g_smem[GTid / WaveGetLaneCount()] = sh;
 
 	GroupMemoryBarrierWithGroupSync();
 
 	if (GTid < WaveGetLaneCount())
 	{
 		sh = g_smem[GTid];
-		sh = WaveActiveSum(sh);
+		sh = WaveLaneSum(GTid, sh);
 	}
 #endif
 
