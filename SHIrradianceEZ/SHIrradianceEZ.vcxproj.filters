@@ -133,6 +133,15 @@
     <None Include="Content\Shaders\CubeMap.hlsli">
       <Filter>Shaders\SHMath</Filter>
     </None>
+    <None Include="Content\Shaders\CSWaveOp.hlsli">
+      <Filter>Shaders\SHMath</Filter>
+    </None>
+    <None Include="Content\Shaders\WaveOpTypeless.hlsli">
+      <Filter>Shaders\SHMath</Filter>
+    </None>
+    <None Include="Content\Shaders\SHIrradianceTypeless.hlsli">
+      <Filter>Shaders\SHMath</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Content\Shaders\CSTemporalAA.hlsl">
