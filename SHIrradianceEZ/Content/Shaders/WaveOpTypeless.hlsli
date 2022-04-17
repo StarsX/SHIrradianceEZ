@@ -31,9 +31,9 @@ T WAVE_LANES_SUM(uint laneId, T expr)
 	[unroll]
 	for (uint i = 0; i < waveBits; ++i)
 	{
-		const uint s = 1 << i;
+		const uint s = SH_WAVE_SIZE >> (i + 1);
 		GroupMemoryBarrierWithGroupSync();
-		g_smem[laneId].SWZ += laneId % s ? 0.0 : g_smem[laneId + s].SWZ;
+		if (laneId < s) g_smem[laneId].SWZ += g_smem[laneId + s].SWZ;
 	}
 
 #if _BROAD_CAST_
