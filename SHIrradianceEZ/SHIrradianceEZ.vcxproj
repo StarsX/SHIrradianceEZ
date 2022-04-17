@@ -160,9 +160,12 @@ COPY /Y "$(ProjectDir)XUSG\Bin\$(Platform)\$(Configuration)\*.dll" "$(ProjectDir
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Content\Shaders\SHIrradianceTypeless.hlsli" />
+    <None Include="Content\Shaders\CSWaveOp.hlsli" />
     <None Include="Content\Shaders\CubeMap.hlsli" />
     <None Include="Content\Shaders\SHIrradiance.hlsli" />
     <None Include="Content\Shaders\SHMath.hlsli" />
+    <None Include="Content\Shaders\WaveOpTypeless.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Content\Shaders\CSGenRadiance.hlsl">

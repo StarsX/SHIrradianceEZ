@@ -37,7 +37,7 @@ void main(uint2 DTid : SV_DispatchThreadID, uint GTid : SV_GroupThreadID, uint2 
 		if (Gid.y == 0) sh.w = g_roWeight[DTid.x];
 	}
 
-	sh = WaveLaneSum(GTid, sh);
+	sh = WaveLanesSum(GTid, sh);
 
 #if SH_GROUP_SIZE > SH_WAVE_SIZE
 	if (GTid % WaveGetLaneCount() == 0) g_smem[GTid / WaveGetLaneCount()] = sh;
@@ -47,7 +47,7 @@ void main(uint2 DTid : SV_DispatchThreadID, uint GTid : SV_GroupThreadID, uint2 
 	if (GTid < WaveGetLaneCount())
 	{
 		sh = g_smem[GTid];
-		sh = WaveLaneSum(GTid, sh);
+		sh = WaveLanesSum(GTid, sh);
 	}
 #endif
 
