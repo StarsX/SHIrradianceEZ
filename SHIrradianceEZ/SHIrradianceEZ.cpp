@@ -388,13 +388,12 @@ void SHIrradianceEZ::PopulateCommandList()
 	const auto pCommandAllocator = m_commandAllocators[m_frameIndex].get();
 	XUSG_N_RETURN(pCommandAllocator->Reset(), ThrowIfFailed(E_FAIL));
 
-	// However, when ExecuteCommandList() is called on a particular command 
-	// list, that command list can then be reset at any time and must be before 
-	// re-recording.
-	const auto pCommandList = m_commandList.get();
-
+	const auto renderTarget = m_renderTargets[m_frameIndex].get();
 	if (m_useEZ)
 	{
+		// However, when ExecuteCommandList() is called on a particular command 
+		// list, that command list can then be reset at any time and must be before 
+		// re-recording.
 		const auto pCommandList = m_commandListEZ.get();
 		XUSG_N_RETURN(pCommandList->Reset(pCommandAllocator, nullptr), ThrowIfFailed(E_FAIL));
 
@@ -402,10 +401,16 @@ void SHIrradianceEZ::PopulateCommandList()
 		m_lightProbeEZ->Process(pCommandList, m_frameIndex);
 		m_rendererEZ->SetLightProbesSH(m_lightProbeEZ->GetSH());
 		m_rendererEZ->Render(pCommandList, m_frameIndex);
-		m_rendererEZ->Postprocess(pCommandList, m_renderTargets[m_frameIndex].get());
+		m_rendererEZ->Postprocess(pCommandList, renderTarget);
+
+		XUSG_N_RETURN(pCommandList->CloseForPresent(renderTarget), ThrowIfFailed(E_FAIL));
 	}
 	else
 	{
+		// However, when ExecuteCommandList() is called on a particular command 
+		// list, that command list can then be reset at any time and must be before 
+		// re-recording.
+		const auto pCommandList = m_commandList.get();
 		XUSG_N_RETURN(pCommandList->Reset(pCommandAllocator, nullptr), ThrowIfFailed(E_FAIL));
 
 		// Record commands.
@@ -415,21 +420,20 @@ void SHIrradianceEZ::PopulateCommandList()
 		ResourceBarrier barriers[5];
 		const auto dstState = ResourceState::NON_PIXEL_SHADER_RESOURCE | ResourceState::PIXEL_SHADER_RESOURCE;
 		auto numBarriers = 0u;
-		numBarriers = m_renderTargets[m_frameIndex]->SetBarrier(barriers, ResourceState::RENDER_TARGET,
+		numBarriers = renderTarget->SetBarrier(barriers, ResourceState::RENDER_TARGET,
 			numBarriers, XUSG_BARRIER_ALL_SUBRESOURCES, BarrierFlag::BEGIN_ONLY);
 		m_renderer->Render(pCommandList, m_frameIndex, barriers, numBarriers);
 
-		numBarriers = m_renderTargets[m_frameIndex]->SetBarrier(barriers, ResourceState::RENDER_TARGET,
+		numBarriers = renderTarget->SetBarrier(barriers, ResourceState::RENDER_TARGET,
 			0, XUSG_BARRIER_ALL_SUBRESOURCES, BarrierFlag::END_ONLY);
-		m_renderer->Postprocess(pCommandList, m_renderTargets[m_frameIndex]->GetRTV(), numBarriers, barriers);
-	}
-	
-	// Indicate that the back buffer will now be used to present.
-	ResourceBarrier barrier;
-	const auto numBarriers = m_renderTargets[m_frameIndex]->SetBarrier(&barrier, ResourceState::PRESENT);
-	pCommandList->Barrier(numBarriers, &barrier);
+		m_renderer->Postprocess(pCommandList, renderTarget->GetRTV(), numBarriers, barriers);
 
-	XUSG_N_RETURN(pCommandList->Close(), ThrowIfFailed(E_FAIL));
+		// Indicate that the back buffer will now be used to present.
+		numBarriers = renderTarget->SetBarrier(barriers, ResourceState::PRESENT);
+		pCommandList->Barrier(numBarriers, barriers);
+
+		XUSG_N_RETURN(pCommandList->Close(), ThrowIfFailed(E_FAIL));
+	}
 }
 
 // Wait for pending GPU work to complete.
