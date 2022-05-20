@@ -261,9 +261,10 @@ void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool 
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	// Set IA
+	const auto vbv = EZ::GetVBV(m_vertexBuffer.get());
 	pCommandList->IASetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
-	pCommandList->IASetVertexBuffers(0, 1, &m_vertexBuffer->GetVBV());
-	pCommandList->IASetIndexBuffer(m_indexBuffer->GetIBV());
+	pCommandList->IASetVertexBuffers(0, 1, &vbv);
+	pCommandList->IASetIndexBuffer(EZ::GetIBV(m_indexBuffer.get()));
 
 	// Set CBVs
 	const auto cbvBasePass = EZ::GetCBV(m_cbBasePass.get(), frameIndex);
