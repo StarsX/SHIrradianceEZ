@@ -171,11 +171,11 @@ void LightProbeEZ::generateRadiance(EZ::CommandList* pCommandList, uint8_t frame
 
 	// Set UAV
 	const auto uav = EZ::GetUAV(m_radiance.get());
-	pCommandList->SetComputeResources(DescriptorType::UAV, 0, 1, &uav);
+	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::UAV, 0, 1, &uav);
 
 	// Set CBV
 	const auto cbv = EZ::GetCBV(m_cbPerFrame.get(), frameIndex);
-	pCommandList->SetComputeResources(DescriptorType::CBV, 0, 1, &cbv);
+	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::CBV, 0, 1, &cbv);
 
 	// Set SRVs
 	const auto numSources = static_cast<uint32_t>(m_sources.size());
@@ -185,10 +185,10 @@ void LightProbeEZ::generateRadiance(EZ::CommandList* pCommandList, uint8_t frame
 		EZ::GetSRV(m_sources[m_inputProbeIdx].get()),
 		EZ::GetSRV(m_sources[nextProbeIdx].get())
 	};
-	pCommandList->SetComputeResources(DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
+	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
 
 	const auto sampler = SamplerPreset::LINEAR_WRAP;
-	pCommandList->SetComputeSamplerStates(0, 1, &sampler);
+	pCommandList->SetSamplerStates(Shader::Stage::CS, 0, 1, &sampler);
 
 	const auto w = static_cast<uint32_t>(m_radiance->GetWidth());
 	const auto h = m_radiance->GetHeight();
@@ -207,20 +207,20 @@ void LightProbeEZ::shCubeMap(EZ::CommandList* pCommandList, uint8_t order)
 		EZ::GetUAV(m_weightSH[0].get())
 
 	};
-	pCommandList->SetComputeResources(DescriptorType::UAV, 0, static_cast<uint32_t>(size(uavs)), uavs);
+	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::UAV, 0, static_cast<uint32_t>(size(uavs)), uavs);
 
 	// Set CBV
 	assert(order <= SH_MAX_ORDER);
 	*reinterpret_cast<uint32_t*>(m_cbSHCubeMap->Map()) = order;
 	const auto cbv = EZ::GetCBV(m_cbSHCubeMap.get());
-	pCommandList->SetComputeResources(DescriptorType::CBV, 0, 1, &cbv);
+	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::CBV, 0, 1, &cbv);
 
 	// Set SRV
 	const auto srv = EZ::GetSRV(m_radiance.get());
-	pCommandList->SetComputeResources(DescriptorType::SRV, 0, 1, &srv);
+	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::SRV, 0, 1, &srv);
 
 	const auto sampler = SamplerPreset::LINEAR_WRAP;
-	pCommandList->SetComputeSamplerStates(0, 1, &sampler);
+	pCommandList->SetSamplerStates(Shader::Stage::CS, 0, 1, &sampler);
 
 	pCommandList->Dispatch(XUSG_DIV_UP(m_numSHTexels, SH_GROUP_SIZE), 1, 1);
 }
@@ -246,7 +246,7 @@ void LightProbeEZ::shSum(EZ::CommandList* pCommandList, uint8_t order, uint8_t f
 			EZ::GetUAV(m_weightSH[dst].get())
 
 		};
-		pCommandList->SetComputeResources(DescriptorType::UAV, 0, static_cast<uint32_t>(size(uavs)), uavs);
+		pCommandList->SetResources(Shader::Stage::CS, DescriptorType::UAV, 0, static_cast<uint32_t>(size(uavs)), uavs);
 
 		// Set SRVs
 		const EZ::ResourceView srvs[] =
@@ -254,12 +254,12 @@ void LightProbeEZ::shSum(EZ::CommandList* pCommandList, uint8_t order, uint8_t f
 			EZ::GetSRV(m_coeffSH[src].get()),
 			EZ::GetSRV(m_weightSH[src].get())
 		};
-		pCommandList->SetComputeResources(DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
+		pCommandList->SetResources(Shader::Stage::CS, DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
 
 		// Set CBV
 		*reinterpret_cast<uint32_t*>(m_cbSHSums->Map(i++)) = order;
 		const auto cbv = EZ::GetCBV(m_cbSHSums.get());
-		pCommandList->SetComputeResources(DescriptorType::CBV, 0, 1, &cbv);
+		pCommandList->SetResources(Shader::Stage::CS, DescriptorType::CBV, 0, 1, &cbv);
 
 		pCommandList->Dispatch(XUSG_DIV_UP(n, SH_GROUP_SIZE), order * order, 1);
 		m_shBufferParity = !m_shBufferParity;
@@ -277,7 +277,7 @@ void LightProbeEZ::shNormalize(EZ::CommandList* pCommandList, uint8_t order)
 
 	// Set UAV
 	const auto uav = EZ::GetUAV(m_coeffSH[dst].get());
-	pCommandList->SetComputeResources(DescriptorType::UAV, 0, 1, &uav);
+	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::UAV, 0, 1, &uav);
 
 	// Set SRVs
 	const EZ::ResourceView srvs[] =
@@ -285,7 +285,7 @@ void LightProbeEZ::shNormalize(EZ::CommandList* pCommandList, uint8_t order)
 		EZ::GetSRV(m_coeffSH[src].get()),
 		EZ::GetSRV(m_weightSH[src].get())
 	};
-	pCommandList->SetComputeResources(DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
+	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
 
 	const auto numElements = order * order;
 	pCommandList->Dispatch(XUSG_DIV_UP(numElements, SH_GROUP_SIZE), 1, 1);

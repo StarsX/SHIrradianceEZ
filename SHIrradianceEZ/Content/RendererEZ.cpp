@@ -152,7 +152,7 @@ void RendererEZ::Postprocess(EZ::CommandList* pCommandList, RenderTarget* pRende
 
 	// Set SRV
 	const auto srv = EZ::GetSRV(m_outputViews[UAV_PP_TAA + m_frameParity].get());
-	pCommandList->SetGraphicsResources(Shader::Stage::PS, DescriptorType::SRV, 0, 1, &srv);
+	pCommandList->SetResources(Shader::Stage::PS, DescriptorType::SRV, 0, 1, &srv);
 
 	// Set viewport
 	Viewport viewport(0.0f, 0.0f, static_cast<float>(m_viewport.x), static_cast<float>(m_viewport.y));
@@ -268,10 +268,10 @@ void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool 
 
 	// Set CBVs
 	const auto cbvBasePass = EZ::GetCBV(m_cbBasePass.get(), frameIndex);
-	pCommandList->SetGraphicsResources(Shader::Stage::VS, DescriptorType::CBV, 0, 1, &cbvBasePass);
+	pCommandList->SetResources(Shader::Stage::VS, DescriptorType::CBV, 0, 1, &cbvBasePass);
 
 	const auto cbvPerFrame = EZ::GetCBV(m_cbPerFrame.get(), frameIndex);
-	pCommandList->SetGraphicsResources(Shader::Stage::PS, DescriptorType::CBV, 0, 1, &cbvPerFrame);
+	pCommandList->SetResources(Shader::Stage::PS, DescriptorType::CBV, 0, 1, &cbvPerFrame);
 
 	// Set SRVs
 	const EZ::ResourceView srvs[] =
@@ -279,12 +279,12 @@ void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool 
 		EZ::GetSRV(m_radiance.get()),
 		EZ::GetSRV(m_coeffSH.get())
 	};
-	pCommandList->SetGraphicsResources(Shader::Stage::PS, DescriptorType::SRV, 0,
+	pCommandList->SetResources(Shader::Stage::PS, DescriptorType::SRV, 0,
 		static_cast<uint32_t>(size(srvs)), srvs);
 
 	// Set sampler
 	const auto sampler = SamplerPreset::ANISOTROPIC_WRAP;
-	pCommandList->SetGraphicsSamplerStates(0, 1, &sampler);
+	pCommandList->SetSamplerStates(Shader::Stage::PS, 0, 1, &sampler);
 
 	pCommandList->DrawIndexed(m_numIndices, 1, 0, 0, 0);
 }
@@ -303,7 +303,7 @@ void RendererEZ::environment(EZ::CommandList* pCommandList, uint8_t frameIndex)
 
 	// Set CBV
 	const auto cbv = EZ::GetCBV(m_cbPerFrame.get(), frameIndex);
-	pCommandList->SetGraphicsResources(Shader::Stage::PS, DescriptorType::CBV, 0, 1, &cbv);
+	pCommandList->SetResources(Shader::Stage::PS, DescriptorType::CBV, 0, 1, &cbv);
 
 	// Set SRVs
 	const EZ::ResourceView srvs[] =
@@ -311,12 +311,12 @@ void RendererEZ::environment(EZ::CommandList* pCommandList, uint8_t frameIndex)
 		EZ::GetSRV(m_radiance.get()),
 		EZ::GetSRV(m_coeffSH.get())
 	};
-	pCommandList->SetGraphicsResources(Shader::Stage::PS, DescriptorType::SRV, 0,
+	pCommandList->SetResources(Shader::Stage::PS, DescriptorType::SRV, 0,
 		static_cast<uint32_t>(size(srvs)), srvs);
 
 	// Set sampler
 	const auto sampler = SamplerPreset::ANISOTROPIC_WRAP;
-	pCommandList->SetGraphicsSamplerStates(0, 1, &sampler);
+	pCommandList->SetSamplerStates(Shader::Stage::PS, 0, 1, &sampler);
 
 	pCommandList->IASetPrimitiveTopology(PrimitiveTopology::TRIANGLELIST);
 	pCommandList->Draw(3, 1, 0, 0);
@@ -329,7 +329,7 @@ void RendererEZ::temporalAA(EZ::CommandList* pCommandList)
 
 	// Set UAVs
 	const auto uav = EZ::GetUAV(m_outputViews[UAV_PP_TAA + m_frameParity].get());
-	pCommandList->SetComputeResources(DescriptorType::UAV, 0, 1, &uav);
+	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::UAV, 0, 1, &uav);
 
 	const EZ::ResourceView srvs[] =
 	{
@@ -337,11 +337,11 @@ void RendererEZ::temporalAA(EZ::CommandList* pCommandList)
 		EZ::GetSRV(m_outputViews[UAV_PP_TAA + !m_frameParity].get()),
 		EZ::GetSRV(m_renderTargets[RT_VELOCITY].get())
 	};
-	pCommandList->SetComputeResources(DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
+	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
 
 	// Set sampler
 	const auto sampler = SamplerPreset::LINEAR_CLAMP;
-	pCommandList->SetComputeSamplerStates(0, 1, &sampler);
+	pCommandList->SetSamplerStates(Shader::Stage::CS, 0, 1, &sampler);
 
 	pCommandList->Dispatch(XUSG_DIV_UP(m_viewport.x, 8), XUSG_DIV_UP(m_viewport.y, 8), 1);
 }
