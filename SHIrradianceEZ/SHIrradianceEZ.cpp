@@ -148,34 +148,23 @@ void SHIrradianceEZ::LoadAssets()
 	vector<Resource::uptr> uploaders(0);	
 	{
 		m_lightProbe = make_unique<LightProbe>();
-		if (!m_lightProbe) ThrowIfFailed(E_FAIL);
-
-		if (!m_lightProbe->Init(pCommandList, m_width, m_height, m_descriptorTableCache, uploaders,
-			m_envFileNames.data(), static_cast<uint32_t>(m_envFileNames.size())))
-			ThrowIfFailed(E_FAIL);
+		XUSG_N_RETURN(m_lightProbe->Init(pCommandList, m_width, m_height, m_descriptorTableCache, uploaders,
+			m_envFileNames.data(), static_cast<uint32_t>(m_envFileNames.size())), ThrowIfFailed(E_FAIL));
 
 		m_renderer = make_unique<Renderer>();
-		if (!m_renderer) ThrowIfFailed(E_FAIL);
-
-		if (!m_renderer->Init(pCommandList, m_width, m_height, m_descriptorTableCache,
-			uploaders, m_meshFileName.c_str(), Format::B8G8R8A8_UNORM, m_meshPosScale))
-			ThrowIfFailed(E_FAIL);
-		if (!m_renderer->SetLightProbe(m_lightProbe->GetRadiance()->GetSRV()))
-			ThrowIfFailed(E_FAIL);
+		XUSG_N_RETURN(m_renderer->Init(pCommandList, m_width, m_height, m_descriptorTableCache,
+			uploaders, m_meshFileName.c_str(), Format::B8G8R8A8_UNORM, m_meshPosScale), ThrowIfFailed(E_FAIL));
+		XUSG_N_RETURN(m_renderer->SetLightProbe(m_lightProbe->GetRadiance()->GetSRV()), ThrowIfFailed(E_FAIL));
 	}
 
 	{
 		m_lightProbeEZ = make_unique<LightProbeEZ>();
-		if (!m_lightProbeEZ) ThrowIfFailed(E_FAIL);
-
-		if (!m_lightProbeEZ->Init(pCommandList, m_width, m_height, uploaders, m_envFileNames.data(),
-			static_cast<uint32_t>(m_envFileNames.size()))) ThrowIfFailed(E_FAIL);
+		XUSG_N_RETURN(m_lightProbeEZ->Init(pCommandList, m_width, m_height, uploaders, m_envFileNames.data(),
+			static_cast<uint32_t>(m_envFileNames.size())), ThrowIfFailed(E_FAIL));
 
 		m_rendererEZ = make_unique<RendererEZ>();
-		if (!m_rendererEZ) ThrowIfFailed(E_FAIL);
-
-		if (!m_rendererEZ->Init(pCommandList, m_width, m_height, uploaders, m_meshFileName.c_str(), m_meshPosScale))
-			ThrowIfFailed(E_FAIL);
+		XUSG_N_RETURN(m_rendererEZ->Init(pCommandList, m_width, m_height, uploaders, m_meshFileName.c_str(),
+			m_meshPosScale), ThrowIfFailed(E_FAIL));
 		m_rendererEZ->SetLightProbe(m_lightProbeEZ->GetRadiance());
 	}
 	
