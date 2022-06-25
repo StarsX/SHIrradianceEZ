@@ -12,10 +12,10 @@ public:
 	Renderer();
 	virtual ~Renderer();
 
-	bool Init(XUSG::CommandList* pCommandList, uint32_t width, uint32_t height,
-		const XUSG::DescriptorTableCache::sptr& descriptorTableCache,
+	bool Init(XUSG::CommandList* pCommandList, const XUSG::DescriptorTableCache::sptr& descriptorTableCache,
 		std::vector<XUSG::Resource::uptr>& uploaders, const char* fileName, XUSG::Format rtFormat,
 		const DirectX::XMFLOAT4& posScale = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
+	bool SetViewport(const XUSG::Device* pDevice, uint32_t width, uint32_t height);
 	bool SetLightProbe(const XUSG::Descriptor& radiance);
 
 	void SetLightProbesSH(const XUSG::StructuredBuffer::sptr& coeffSH);

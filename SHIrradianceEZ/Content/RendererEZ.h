@@ -12,9 +12,9 @@ public:
 	RendererEZ();
 	virtual ~RendererEZ();
 
-	bool Init(XUSG::CommandList* pCommandList, uint32_t width, uint32_t height,
-		std::vector<XUSG::Resource::uptr>& uploaders, const char* fileName,
-		const DirectX::XMFLOAT4& posScale = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
+	bool Init(XUSG::CommandList* pCommandList, std::vector<XUSG::Resource::uptr>& uploaders,
+		const char* fileName, const DirectX::XMFLOAT4& posScale = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
+	bool SetViewport(const XUSG::Device* pDevice, uint32_t width, uint32_t height);
 
 	void SetLightProbe(const XUSG::Texture::sptr& radiance);
 	void SetLightProbesSH(const XUSG::StructuredBuffer::sptr& coeffSH);

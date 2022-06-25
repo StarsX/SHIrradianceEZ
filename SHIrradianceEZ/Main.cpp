@@ -14,7 +14,7 @@
 _Use_decl_annotations_
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
-	SHIrradianceEZ shIrradiance(1280, 720, L"DirectX 12 Irradiance Mapping");
+	SHIrradianceEZ shIrradiance(1280, 720, L"DirectX 12 Spherical-Harmonics Irradiance");
 
 	return Win32Application::Run(&shIrradiance, hInstance, nCmdShow);
 }

@@ -37,11 +37,10 @@ RendererEZ::~RendererEZ()
 {
 }
 
-bool RendererEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t height,
-	vector<Resource::uptr>& uploaders, const char* fileName, const XMFLOAT4& posScale)
+bool RendererEZ::Init(CommandList* pCommandList, vector<Resource::uptr>& uploaders,
+	const char* fileName, const XMFLOAT4& posScale)
 {
 	const auto pDevice = pCommandList->GetDevice();
-	m_viewport = XMUINT2(width, height);
 	m_posScale = posScale;
 
 	// Load inputs
@@ -49,26 +48,6 @@ bool RendererEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t height
 	if (!objLoader.Import(fileName, true, true)) return false;
 	XUSG_N_RETURN(createVB(pCommandList, objLoader.GetNumVertices(), objLoader.GetVertexStride(), objLoader.GetVertices(), uploaders), false);
 	XUSG_N_RETURN(createIB(pCommandList, objLoader.GetNumIndices(), objLoader.GetIndices(), uploaders), false);
-
-	// Create output views
-	// Render targets
-	for (auto& renderTarget : m_renderTargets) renderTarget = RenderTarget::MakeUnique();
-	m_renderTargets[RT_COLOR]->Create(pDevice, width, height, Format::R16G16B16A16_FLOAT,
-		1, ResourceFlag::NONE, 1, 1, nullptr, false, MemoryFlag::NONE, L"Color");
-	m_renderTargets[RT_VELOCITY]->Create(pDevice, width, height, Format::R16G16_FLOAT,
-		1, ResourceFlag::NONE, 1, 1, nullptr, false, MemoryFlag::NONE, L"Velocity");
-
-	m_depth = DepthStencil::MakeUnique();
-	m_depth->Create(pDevice, width, height, Format::D24_UNORM_S8_UINT,
-		ResourceFlag::DENY_SHADER_RESOURCE, 1, 1, 1, 1.0f, 0, false,
-		MemoryFlag::NONE, L"Depth");
-
-	// Temporal AA
-	for (auto& outView : m_outputViews) outView = Texture2D::MakeUnique();
-	m_outputViews[UAV_PP_TAA]->Create(pDevice, width, height, Format::R16G16B16A16_FLOAT, 1,
-		ResourceFlag::ALLOW_UNORDERED_ACCESS, 1, 1, false, MemoryFlag::NONE, L"TemporalAAOut0");
-	m_outputViews[UAV_PP_TAA1]->Create(pDevice, width, height, Format::R16G16B16A16_FLOAT, 1,
-		ResourceFlag::ALLOW_UNORDERED_ACCESS, 1, 1, false, MemoryFlag::NONE, L"TemporalAAOut1");
 
 	// Create constant buffers
 	m_cbBasePass = ConstantBuffer::MakeUnique();
@@ -82,6 +61,33 @@ bool RendererEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t height
 	// Create shaders and input layout
 	XUSG_N_RETURN(createShaders(), false);
 	createInputLayout();
+
+	return true;
+}
+
+bool RendererEZ::SetViewport(const Device* pDevice, uint32_t width, uint32_t height)
+{
+	m_viewport = XMUINT2(width, height);
+
+	// Create output views
+	// Render targets
+	for (auto& renderTarget : m_renderTargets) renderTarget = RenderTarget::MakeUnique();
+	XUSG_N_RETURN(m_renderTargets[RT_COLOR]->Create(pDevice, width, height, Format::R16G16B16A16_FLOAT,
+		1, ResourceFlag::NONE, 1, 1, nullptr, false, MemoryFlag::NONE, L"Color"), false);
+	XUSG_N_RETURN(m_renderTargets[RT_VELOCITY]->Create(pDevice, width, height, Format::R16G16_FLOAT,
+		1, ResourceFlag::NONE, 1, 1, nullptr, false, MemoryFlag::NONE, L"Velocity"), false);
+
+	m_depth = DepthStencil::MakeUnique();
+	XUSG_N_RETURN(m_depth->Create(pDevice, width, height, Format::D24_UNORM_S8_UINT,
+		ResourceFlag::DENY_SHADER_RESOURCE, 1, 1, 1, 1.0f, 0, false,
+		MemoryFlag::NONE, L"Depth"), false);
+
+	// Temporal AA
+	for (auto& outView : m_outputViews) outView = Texture2D::MakeUnique();
+	XUSG_N_RETURN(m_outputViews[UAV_PP_TAA]->Create(pDevice, width, height, Format::R16G16B16A16_FLOAT, 1,
+		ResourceFlag::ALLOW_UNORDERED_ACCESS, 1, 1, false, MemoryFlag::NONE, L"TemporalAAOut0"), false);
+	XUSG_N_RETURN(m_outputViews[UAV_PP_TAA1]->Create(pDevice, width, height, Format::R16G16B16A16_FLOAT, 1,
+		ResourceFlag::ALLOW_UNORDERED_ACCESS, 1, 1, false, MemoryFlag::NONE, L"TemporalAAOut1"), false);
 
 	return true;
 }

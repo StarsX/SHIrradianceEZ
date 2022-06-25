@@ -21,8 +21,8 @@ LightProbeEZ::~LightProbeEZ()
 {
 }
 
-bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t height,
-	vector<Resource::uptr>& uploaders, const wstring pFileNames[], uint32_t numFiles)
+bool LightProbeEZ::Init(CommandList* pCommandList, vector<Resource::uptr>& uploaders,
+	const wstring pFileNames[], uint32_t numFiles)
 {
 	const auto pDevice = pCommandList->GetDevice();
 
@@ -55,21 +55,21 @@ bool LightProbeEZ::Init(CommandList* pCommandList, uint32_t width, uint32_t heig
 	const auto maxElements = SH_MAX_ORDER * SH_MAX_ORDER * numGroups;
 	const auto maxSumElements = SH_MAX_ORDER * SH_MAX_ORDER * numSumGroups;
 	m_coeffSH[0] = StructuredBuffer::MakeShared();
-	m_coeffSH[0]->Create(pDevice, maxElements, sizeof(float[3]),
+	XUSG_N_RETURN(m_coeffSH[0]->Create(pDevice, maxElements, sizeof(float[3]),
 		ResourceFlag::ALLOW_UNORDERED_ACCESS, MemoryType::DEFAULT,
-		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHCoefficients0");
+		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHCoefficients0"), false);
 	m_coeffSH[1] = StructuredBuffer::MakeShared();
-	m_coeffSH[1]->Create(pDevice, maxSumElements, sizeof(float[3]),
+	XUSG_N_RETURN(m_coeffSH[1]->Create(pDevice, maxSumElements, sizeof(float[3]),
 		ResourceFlag::ALLOW_UNORDERED_ACCESS, MemoryType::DEFAULT,
-		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHCoefficients1");
+		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHCoefficients1"), false);
 	m_weightSH[0] = StructuredBuffer::MakeUnique();
-	m_weightSH[0]->Create(pDevice, numGroups, sizeof(float),
+	XUSG_N_RETURN(m_weightSH[0]->Create(pDevice, numGroups, sizeof(float),
 		ResourceFlag::ALLOW_UNORDERED_ACCESS, MemoryType::DEFAULT,
-		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHWeights0");
+		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHWeights0"), false);
 	m_weightSH[1] = StructuredBuffer::MakeUnique();
-	m_weightSH[1]->Create(pDevice, numSumGroups, sizeof(float),
+	XUSG_N_RETURN(m_weightSH[1]->Create(pDevice, numSumGroups, sizeof(float),
 		ResourceFlag::ALLOW_UNORDERED_ACCESS, MemoryType::DEFAULT,
-		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHWeights1");
+		1, nullptr, 1, nullptr, MemoryFlag::NONE, L"SHWeights1"), false);
 
 	// Create constant buffers
 	m_cbPerFrame = ConstantBuffer::MakeUnique();
