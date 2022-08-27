@@ -468,14 +468,6 @@ void Renderer::environment(const CommandList* pCommandList, uint8_t frameIndex)
 
 void Renderer::temporalAA(CommandList* pCommandList)
 {
-	// Bind the heaps, acceleration structure and dispatch rays.
-	const DescriptorPool descriptorPools[] =
-	{
-		m_descriptorTableCache->GetDescriptorPool(CBV_SRV_UAV_POOL),
-		m_descriptorTableCache->GetDescriptorPool(SAMPLER_POOL)
-	};
-	pCommandList->SetDescriptorPools(static_cast<uint32_t>(size(descriptorPools)), descriptorPools);
-
 	ResourceBarrier barriers[4];
 	auto numBarriers = m_outputViews[UAV_PP_TAA + m_frameParity]->SetBarrier(barriers, ResourceState::UNORDERED_ACCESS);
 	numBarriers = m_renderTargets[RT_COLOR]->SetBarrier(barriers, ResourceState::NON_PIXEL_SHADER_RESOURCE, numBarriers);

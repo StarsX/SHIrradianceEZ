@@ -127,7 +127,6 @@ void LightProbeEZ::UpdateFrame(double time, uint8_t frameIndex)
 
 void LightProbeEZ::Process(EZ::CommandList* pCommandList, uint8_t frameIndex)
 {
-	// Set Descriptor pools
 	const uint8_t order = 3;
 	generateRadiance(pCommandList, frameIndex);
 	shCubeMap(pCommandList, order);

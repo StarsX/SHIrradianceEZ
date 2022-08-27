@@ -495,6 +495,14 @@ void SHIrradianceEZ::PopulateCommandList()
 		XUSG_N_RETURN(pCommandList->Reset(pCommandAllocator, nullptr), ThrowIfFailed(E_FAIL));
 
 		// Record commands.
+		// Bind the descriptor pools.
+		const DescriptorPool descriptorPools[] =
+		{
+			m_descriptorTableCache->GetDescriptorPool(CBV_SRV_UAV_POOL),
+			m_descriptorTableCache->GetDescriptorPool(SAMPLER_POOL)
+		};
+		pCommandList->SetDescriptorPools(static_cast<uint32_t>(size(descriptorPools)), descriptorPools);
+
 		m_lightProbe->Process(pCommandList, m_frameIndex);
 		m_renderer->SetLightProbesSH(m_lightProbe->GetSH());
 
