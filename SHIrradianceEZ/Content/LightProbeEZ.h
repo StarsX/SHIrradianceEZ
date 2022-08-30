@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "DXFramework.h"
 #include "Helper/XUSG-EZ.h"
 
 class LightProbeEZ

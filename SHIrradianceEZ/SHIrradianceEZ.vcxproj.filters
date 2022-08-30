@@ -54,9 +54,6 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Common\dds.h">
-      <Filter>Common\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SHIrradianceEZ.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -87,9 +84,6 @@
     <ClInclude Include="Content\RendererEZ.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="XUSG\Advanced\XUSGSHSharedConsts.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Common\d3dcommon.h">
       <Filter>Common\Header Files</Filter>
     </ClInclude>
@@ -98,6 +92,12 @@
     </ClInclude>
     <ClInclude Include="Common\dxgiformat.h">
       <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XUSG\Advanced\XUSGHalton.h">
+      <Filter>XUSG</Filter>
+    </ClInclude>
+    <ClInclude Include="XUSG\Advanced\XUSGSHSharedConsts.h">
+      <Filter>XUSG</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
