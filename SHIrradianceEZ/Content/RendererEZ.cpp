@@ -245,12 +245,12 @@ void RendererEZ::render(EZ::CommandList* pCommandList, uint8_t frameIndex, bool 
 	pCommandList->DSSetState(Graphics::DEFAULT_LESS);
 
 	// Set render targets
-	EZ::ResourceView rtvs[] =
+	const EZ::ResourceView rtvs[] =
 	{
 		EZ::GetRTV(m_renderTargets[RT_COLOR].get()),
 		EZ::GetRTV(m_renderTargets[RT_VELOCITY].get()),
 	};
-	auto dsv = EZ::GetDSV(m_depth.get());
+	const auto dsv = EZ::GetDSV(m_depth.get());
 	pCommandList->OMSetRenderTargets(static_cast<uint32_t>(size(rtvs)), rtvs, &dsv);
 
 	// Clear render target
