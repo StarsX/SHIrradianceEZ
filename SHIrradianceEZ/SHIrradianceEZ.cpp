@@ -484,7 +484,7 @@ void SHIrradianceEZ::PopulateCommandList()
 		m_rendererEZ->Render(pCommandList, m_frameIndex);
 		m_rendererEZ->Postprocess(pCommandList, renderTarget);
 
-		XUSG_N_RETURN(pCommandList->CloseForPresent(renderTarget), ThrowIfFailed(E_FAIL));
+		XUSG_N_RETURN(pCommandList->Close(renderTarget), ThrowIfFailed(E_FAIL));
 	}
 	else
 	{

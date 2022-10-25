@@ -88,7 +88,7 @@ PSOut Shade(PSIn input, min16float3 norm, float3 irradiance)
 #endif
 
 	//output.Color = min16float4(norm * 0.5 + 0.5, 1.0);
-	output.Color = min16float4(irradiance + radiance * g_glossy, 1.0);
+	output.Color = min16float4(irradiance / PI + radiance * g_glossy, 1.0);
 	output.Velocity = min16float4(velocity, 0.0.xx);
 
 	return output;
