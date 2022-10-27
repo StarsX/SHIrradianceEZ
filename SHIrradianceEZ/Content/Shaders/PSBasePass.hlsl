@@ -2,6 +2,10 @@
 // Copyright (c) XU, Tianchen. All rights reserved.
 //--------------------------------------------------------------------------------------
 
+#ifndef PI
+#define PI 3.1415926535897
+#endif
+
 //--------------------------------------------------------------------------------------
 // Structs
 //--------------------------------------------------------------------------------------
@@ -103,6 +107,7 @@ PSOut main(PSIn input)
 	const min16float3 norm = min16float3(normalize(input.Norm));
 	//float3 irradiance = g_txIrradiance.Sample(g_sampler, input.Norm);
 	float3 irradiance = g_txIrradiance.SampleLevel(g_sampler, input.Norm, 0.0);
+	irradiance *= PI;
 
 	return Shade(input, norm, irradiance);
 }
