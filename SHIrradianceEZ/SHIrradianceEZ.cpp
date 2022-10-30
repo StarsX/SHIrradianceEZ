@@ -122,8 +122,8 @@ void SHIrradianceEZ::LoadPipeline()
 			(L"CommandAllocator" + to_wstring(n)).c_str()), ThrowIfFailed(E_FAIL));
 	}
 
-	// Create descriptor table cache.
-	m_descriptorTableCache = DescriptorTableCache::MakeShared(m_device.get(), L"DescriptorTableCache");
+	// Create descriptor-table lib.
+	m_descriptorTableLib = DescriptorTableLib::MakeShared(m_device.get(), L"DescriptorTableLib");
 }
 
 // Load the sample assets.
@@ -142,11 +142,11 @@ void SHIrradianceEZ::LoadAssets()
 	vector<Resource::uptr> uploaders(0);	
 	{
 		m_lightProbe = make_unique<LightProbe>();
-		XUSG_N_RETURN(m_lightProbe->Init(pCommandList, m_descriptorTableCache, uploaders,
+		XUSG_N_RETURN(m_lightProbe->Init(pCommandList, m_descriptorTableLib, uploaders,
 			m_envFileNames.data(), static_cast<uint32_t>(m_envFileNames.size())), ThrowIfFailed(E_FAIL));
 
 		m_renderer = make_unique<Renderer>();
-		XUSG_N_RETURN(m_renderer->Init(pCommandList, m_descriptorTableCache, uploaders,
+		XUSG_N_RETURN(m_renderer->Init(pCommandList, m_descriptorTableLib, uploaders,
 			m_meshFileName.c_str(), Format::B8G8R8A8_UNORM, m_meshPosScale), ThrowIfFailed(E_FAIL));
 	}
 
@@ -298,8 +298,8 @@ void SHIrradianceEZ::OnWindowSizeChanged(int width, int height)
 		m_renderTargets[n].reset();
 		m_fenceValues[n] = m_fenceValues[m_frameIndex];
 	}
-	m_descriptorTableCache->ResetDescriptorPool(CBV_SRV_UAV_POOL, 0);
-	m_descriptorTableCache->ResetDescriptorPool(RTV_POOL, 0);
+	m_descriptorTableLib->ResetDescriptorPool(CBV_SRV_UAV_POOL, 0);
+	m_descriptorTableLib->ResetDescriptorPool(RTV_POOL, 0);
 
 	m_commandListEZ->Resize();
 
@@ -498,8 +498,8 @@ void SHIrradianceEZ::PopulateCommandList()
 		// Bind the descriptor pools.
 		const DescriptorPool descriptorPools[] =
 		{
-			m_descriptorTableCache->GetDescriptorPool(CBV_SRV_UAV_POOL),
-			m_descriptorTableCache->GetDescriptorPool(SAMPLER_POOL)
+			m_descriptorTableLib->GetDescriptorPool(CBV_SRV_UAV_POOL),
+			m_descriptorTableLib->GetDescriptorPool(SAMPLER_POOL)
 		};
 		pCommandList->SetDescriptorPools(static_cast<uint32_t>(size(descriptorPools)), descriptorPools);
 

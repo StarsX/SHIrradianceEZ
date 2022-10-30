@@ -14,21 +14,21 @@ using namespace XUSG;
 
 LightProbe::LightProbe()
 {
-	m_shaderPool = ShaderPool::MakeUnique();
+	m_shaderLib = ShaderLib::MakeUnique();
 }
 
 LightProbe::~LightProbe()
 {
 }
 
-bool LightProbe::Init(CommandList* pCommandList, const DescriptorTableCache::sptr& descriptorTableCache,
+bool LightProbe::Init(CommandList* pCommandList, const DescriptorTableLib::sptr& descriptorTableLib,
 	vector<Resource::uptr>& uploaders, const wstring pFileNames[], uint32_t numFiles)
 {
 	const auto pDevice = pCommandList->GetDevice();
-	m_graphicsPipelineCache = Graphics::PipelineCache::MakeUnique(pDevice);
-	m_computePipelineCache = Compute::PipelineCache::MakeUnique(pDevice);
-	m_pipelineLayoutCache = PipelineLayoutCache::MakeUnique(pDevice);
-	m_descriptorTableCache = descriptorTableCache;
+	m_graphicsPipelineLib = Graphics::PipelineLib::MakeUnique(pDevice);
+	m_computePipelineLib = Compute::PipelineLib::MakeUnique(pDevice);
+	m_pipelineLayoutLib = PipelineLayoutLib::MakeUnique(pDevice);
+	m_descriptorTableLib = descriptorTableLib;
 
 	// Load input image
 	auto texWidth = 1u, texHeight = 1u;
@@ -134,7 +134,7 @@ bool LightProbe::createPipelineLayouts()
 		utilPipelineLayout->SetRange(2, DescriptorType::UAV, 1, 0, 0, DescriptorFlag::DATA_STATIC_WHILE_SET_AT_EXECUTE);
 		utilPipelineLayout->SetRange(3, DescriptorType::SRV, 2, 0);
 		XUSG_X_RETURN(m_pipelineLayouts[RADIANCE_GEN], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutCache.get(), PipelineLayoutFlag::NONE, L"RadianceGenerationLayout"), false);
+			m_pipelineLayoutLib.get(), PipelineLayoutFlag::NONE, L"RadianceGenerationLayout"), false);
 	}
 
 	// SH cube map transform
@@ -144,9 +144,9 @@ bool LightProbe::createPipelineLayouts()
 		utilPipelineLayout->SetRootUAV(1, 0);
 		utilPipelineLayout->SetRootUAV(2, 1);
 		utilPipelineLayout->SetRange(3, DescriptorType::SRV, 1, 0);
-		utilPipelineLayout->SetConstants(4, XUSG_SizeOfInUint32(uint32_t[2]), 0);
+		utilPipelineLayout->SetConstants(4, XUSG_UINT32_SIZE_OF(uint32_t[2]), 0);
 		XUSG_X_RETURN(m_pipelineLayouts[SH_CUBE_MAP], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutCache.get(), PipelineLayoutFlag::NONE, L"SHCubeMapLayout"), false);
+			m_pipelineLayoutLib.get(), PipelineLayoutFlag::NONE, L"SHCubeMapLayout"), false);
 	}
 
 	// SH sum
@@ -156,9 +156,9 @@ bool LightProbe::createPipelineLayouts()
 		utilPipelineLayout->SetRootUAV(1, 1);
 		utilPipelineLayout->SetRootSRV(2, 0);
 		utilPipelineLayout->SetRootSRV(3, 1);
-		utilPipelineLayout->SetConstants(4, XUSG_SizeOfInUint32(uint32_t[2]), 0);
+		utilPipelineLayout->SetConstants(4, XUSG_UINT32_SIZE_OF(uint32_t[2]), 0);
 		XUSG_X_RETURN(m_pipelineLayouts[SH_SUM], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutCache.get(), PipelineLayoutFlag::NONE, L"SHSumLayout"), false);
+			m_pipelineLayoutLib.get(), PipelineLayoutFlag::NONE, L"SHSumLayout"), false);
 	}
 
 	// SH normalization
@@ -168,7 +168,7 @@ bool LightProbe::createPipelineLayouts()
 		utilPipelineLayout->SetRootSRV(1, 0);
 		utilPipelineLayout->SetRootSRV(2, 1);
 		XUSG_X_RETURN(m_pipelineLayouts[SH_NORMALIZE], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutCache.get(), PipelineLayoutFlag::NONE, L"SHNormalizeLayout"), false);
+			m_pipelineLayoutLib.get(), PipelineLayoutFlag::NONE, L"SHNormalizeLayout"), false);
 	}
 
 	return true;
@@ -180,42 +180,42 @@ bool LightProbe::createPipelines(Format rtFormat)
 
 	// Generate radiance
 	{
-		XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSGenRadiance.cso"), false);
+		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSGenRadiance.cso"), false);
 
 		const auto state = Compute::State::MakeUnique();
 		state->SetPipelineLayout(m_pipelineLayouts[RADIANCE_GEN]);
-		state->SetShader(m_shaderPool->GetShader(Shader::Stage::CS, csIndex++));
-		XUSG_X_RETURN(m_pipelines[RADIANCE_GEN], state->GetPipeline(m_computePipelineCache.get(), L"RadianceGeneration_compute"), false);
+		state->SetShader(m_shaderLib->GetShader(Shader::Stage::CS, csIndex++));
+		XUSG_X_RETURN(m_pipelines[RADIANCE_GEN], state->GetPipeline(m_computePipelineLib.get(), L"RadianceGeneration_compute"), false);
 	}
 
 	// SH cube map transform
 	{
-		XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHCubeMap.cso"), false);
+		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSSHCubeMap.cso"), false);
 
 		const auto state = Compute::State::MakeUnique();
 		state->SetPipelineLayout(m_pipelineLayouts[SH_CUBE_MAP]);
-		state->SetShader(m_shaderPool->GetShader(Shader::Stage::CS, csIndex++));
-		XUSG_X_RETURN(m_pipelines[SH_CUBE_MAP], state->GetPipeline(m_computePipelineCache.get(), L"SHCubeMap"), false);
+		state->SetShader(m_shaderLib->GetShader(Shader::Stage::CS, csIndex++));
+		XUSG_X_RETURN(m_pipelines[SH_CUBE_MAP], state->GetPipeline(m_computePipelineLib.get(), L"SHCubeMap"), false);
 	}
 
 	// SH sum
 	{
-		XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHSum.cso"), false);
+		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSSHSum.cso"), false);
 
 		const auto state = Compute::State::MakeUnique();
 		state->SetPipelineLayout(m_pipelineLayouts[SH_SUM]);
-		state->SetShader(m_shaderPool->GetShader(Shader::Stage::CS, csIndex++));
-		XUSG_X_RETURN(m_pipelines[SH_SUM], state->GetPipeline(m_computePipelineCache.get(), L"SHSum"), false);
+		state->SetShader(m_shaderLib->GetShader(Shader::Stage::CS, csIndex++));
+		XUSG_X_RETURN(m_pipelines[SH_SUM], state->GetPipeline(m_computePipelineLib.get(), L"SHSum"), false);
 	}
 
 	// SH normalization
 	{
-		XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHNormalize.cso"), false);
+		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSSHNormalize.cso"), false);
 
 		const auto state = Compute::State::MakeUnique();
 		state->SetPipelineLayout(m_pipelineLayouts[SH_NORMALIZE]);
-		state->SetShader(m_shaderPool->GetShader(Shader::Stage::CS, csIndex));
-		XUSG_X_RETURN(m_pipelines[SH_NORMALIZE], state->GetPipeline(m_computePipelineCache.get(), L"SHNormalize"), false);
+		state->SetShader(m_shaderLib->GetShader(Shader::Stage::CS, csIndex));
+		XUSG_X_RETURN(m_pipelines[SH_NORMALIZE], state->GetPipeline(m_computePipelineLib.get(), L"SHNormalize"), false);
 	}
 
 	return true;
@@ -227,7 +227,7 @@ bool LightProbe::createDescriptorTables()
 	{
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 		descriptorTable->SetDescriptors(0, 1, &m_radiance->GetUAV());
-		XUSG_X_RETURN(m_uavTable, descriptorTable->GetCbvSrvUavTable(m_descriptorTableCache.get()), false);
+		XUSG_X_RETURN(m_uavTable, descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get()), false);
 	}
 
 	// Get SRV tables for radiance generation
@@ -237,7 +237,7 @@ bool LightProbe::createDescriptorTables()
 	{
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 		descriptorTable->SetDescriptors(0, 1, &m_sources[i]->GetSRV());
-		XUSG_X_RETURN(m_srvTables[SRV_TABLE_INPUT][i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableCache.get()), false);
+		XUSG_X_RETURN(m_srvTables[SRV_TABLE_INPUT][i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get()), false);
 	}
 	{
 		const auto i = numSources - 1;
@@ -248,7 +248,7 @@ bool LightProbe::createDescriptorTables()
 		};
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 		descriptorTable->SetDescriptors(0, static_cast<uint32_t>(size(descriptors)), descriptors);
-		XUSG_X_RETURN(m_srvTables[SRV_TABLE_INPUT][i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableCache.get()), false);
+		XUSG_X_RETURN(m_srvTables[SRV_TABLE_INPUT][i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get()), false);
 	}
 
 	// Create radiance SRV
@@ -256,14 +256,14 @@ bool LightProbe::createDescriptorTables()
 	{
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 		descriptorTable->SetDescriptors(0, 1, &m_radiance->GetSRV());
-		XUSG_X_RETURN(m_srvTables[SRV_TABLE_RADIANCE][0], descriptorTable->GetCbvSrvUavTable(m_descriptorTableCache.get()), false);
+		XUSG_X_RETURN(m_srvTables[SRV_TABLE_RADIANCE][0], descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get()), false);
 	}
 
 	// Create the sampler table
 	const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 	const auto sampler = LINEAR_WRAP;
-	descriptorTable->SetSamplers(0, 1, &sampler, m_descriptorTableCache.get());
-	XUSG_X_RETURN(m_samplerTable, descriptorTable->GetSamplerTable(m_descriptorTableCache.get()), false);
+	descriptorTable->SetSamplers(0, 1, &sampler, m_descriptorTableLib.get());
+	XUSG_X_RETURN(m_samplerTable, descriptorTable->GetSamplerTable(m_descriptorTableLib.get()), false);
 
 	return true;
 }
@@ -297,7 +297,7 @@ void LightProbe::shCubeMap(CommandList* pCommandList, uint8_t order)
 	pCommandList->SetComputeRootUnorderedAccessView(2, m_weightSH[0].get());
 	pCommandList->SetComputeDescriptorTable(3, m_srvTables[SRV_TABLE_RADIANCE][0]);
 	pCommandList->SetCompute32BitConstant(4, order);
-	pCommandList->SetCompute32BitConstant(4, SH_TEX_SIZE, XUSG_SizeOfInUint32(order));
+	pCommandList->SetCompute32BitConstant(4, SH_TEX_SIZE, XUSG_UINT32_SIZE_OF(order));
 	pCommandList->SetPipelineState(m_pipelines[SH_CUBE_MAP]);
 
 	pCommandList->Dispatch(XUSG_DIV_UP(m_numSHTexels, SH_GROUP_SIZE), 1, 1);
@@ -331,7 +331,7 @@ void LightProbe::shSum(CommandList* pCommandList, uint8_t order)
 		pCommandList->SetComputeRootUnorderedAccessView(1, m_weightSH[dst].get());
 		pCommandList->SetComputeRootShaderResourceView(2, m_coeffSH[src].get());
 		pCommandList->SetComputeRootShaderResourceView(3, m_weightSH[src].get());
-		pCommandList->SetCompute32BitConstant(4, n, XUSG_SizeOfInUint32(order));
+		pCommandList->SetCompute32BitConstant(4, n, XUSG_UINT32_SIZE_OF(order));
 
 		pCommandList->Dispatch(XUSG_DIV_UP(n, SH_GROUP_SIZE), order * order, 1);
 		m_shBufferParity = !m_shBufferParity;

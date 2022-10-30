@@ -52,9 +52,9 @@ private:
 	static const uint8_t FrameCount = LightProbe::FrameCount;
 	static_assert(FrameCount == Renderer::FrameCount, "IrradianceMap::FrameCount should be equal to Renderer::FrameCount");
 
-	XUSG::com_ptr<IDXGIFactory5> m_factory;
+	XUSG::com_ptr<IDXGIFactory5>	m_factory;
 
-	XUSG::DescriptorTableCache::sptr m_descriptorTableCache;
+	XUSG::DescriptorTableLib::sptr	m_descriptorTableLib;
 
 	XUSG::SwapChain::uptr			m_swapChain;
 	XUSG::CommandAllocator::uptr	m_commandAllocators[FrameCount];

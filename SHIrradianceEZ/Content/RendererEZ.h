@@ -87,6 +87,6 @@ protected:
 	XUSG::ConstantBuffer::uptr	m_cbBasePass;
 	XUSG::ConstantBuffer::uptr	m_cbPerFrame;
 
-	XUSG::ShaderPool::uptr		m_shaderPool;
+	XUSG::ShaderLib::uptr		m_shaderLib;
 	XUSG::Blob m_shaders[NUM_SHADER];
 };

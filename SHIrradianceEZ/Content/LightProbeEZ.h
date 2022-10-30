@@ -42,7 +42,7 @@ protected:
 	void shSum(XUSG::EZ::CommandList* pCommandList, uint8_t order, uint8_t frameIndex);
 	void shNormalize(XUSG::EZ::CommandList* pCommandList, uint8_t order);
 
-	XUSG::ShaderPool::uptr m_shaderPool;
+	XUSG::ShaderLib::uptr m_shaderLib;
 	XUSG::Blob m_shaders[NUM_SHADER];
 
 	std::vector<XUSG::Texture::sptr> m_sources;

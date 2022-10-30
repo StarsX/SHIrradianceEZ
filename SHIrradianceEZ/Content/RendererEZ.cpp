@@ -30,7 +30,7 @@ struct CBPerFrame
 RendererEZ::RendererEZ() :
 	m_frameParity(0)
 {
-	m_shaderPool = ShaderPool::MakeUnique();
+	m_shaderLib = ShaderLib::MakeUnique();
 }
 
 RendererEZ::~RendererEZ()
@@ -202,23 +202,23 @@ bool RendererEZ::createShaders()
 	auto psIndex = 0u;
 	auto csIndex = 0u;
 
-	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::VS, vsIndex, L"VSBasePass.cso"), false);
-	m_shaders[VS_BASE_PASS] = m_shaderPool->GetShader(Shader::Stage::VS, vsIndex++);
+	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::VS, vsIndex, L"VSBasePass.cso"), false);
+	m_shaders[VS_BASE_PASS] = m_shaderLib->GetShader(Shader::Stage::VS, vsIndex++);
 
-	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::VS, vsIndex, L"VSScreenQuad.cso"), false);
-	m_shaders[VS_SCREEN_QUAD] = m_shaderPool->GetShader(Shader::Stage::VS, vsIndex++);
+	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::VS, vsIndex, L"VSScreenQuad.cso"), false);
+	m_shaders[VS_SCREEN_QUAD] = m_shaderLib->GetShader(Shader::Stage::VS, vsIndex++);
 
-	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::PS, psIndex, L"PSBasePassSH.cso"), false);
-	m_shaders[PS_BASE_PASS] = m_shaderPool->GetShader(Shader::Stage::PS, psIndex++);
+	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::PS, psIndex, L"PSBasePassSH.cso"), false);
+	m_shaders[PS_BASE_PASS] = m_shaderLib->GetShader(Shader::Stage::PS, psIndex++);
 
-	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::PS, psIndex, L"PSEnvironment.cso"), false);
-	m_shaders[PS_ENVIRONMENT] = m_shaderPool->GetShader(Shader::Stage::PS, psIndex++);
+	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::PS, psIndex, L"PSEnvironment.cso"), false);
+	m_shaders[PS_ENVIRONMENT] = m_shaderLib->GetShader(Shader::Stage::PS, psIndex++);
 
-	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::PS, psIndex, L"PSPostprocess.cso"), false);
-	m_shaders[PS_POSTPROCESS] = m_shaderPool->GetShader(Shader::Stage::PS, psIndex++);
+	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::PS, psIndex, L"PSPostprocess.cso"), false);
+	m_shaders[PS_POSTPROCESS] = m_shaderLib->GetShader(Shader::Stage::PS, psIndex++);
 
-	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSTemporalAA.cso"), false);
-	m_shaders[CS_TEMPORAL_AA] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
+	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSTemporalAA.cso"), false);
+	m_shaders[CS_TEMPORAL_AA] = m_shaderLib->GetShader(Shader::Stage::CS, csIndex++);
 
 	return true;
 }

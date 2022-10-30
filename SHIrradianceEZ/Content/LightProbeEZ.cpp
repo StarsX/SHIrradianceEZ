@@ -14,7 +14,7 @@ using namespace XUSG;
 
 LightProbeEZ::LightProbeEZ()
 {
-	m_shaderPool = ShaderPool::MakeUnique();
+	m_shaderLib = ShaderLib::MakeUnique();
 }
 
 LightProbeEZ::~LightProbeEZ()
@@ -148,17 +148,17 @@ bool LightProbeEZ::createShaders()
 {
 	auto csIndex = 0u;
 
-	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSGenRadiance.cso"), false);
-	m_shaders[CS_RADIANCE_GEN] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
+	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSGenRadiance.cso"), false);
+	m_shaders[CS_RADIANCE_GEN] = m_shaderLib->GetShader(Shader::Stage::CS, csIndex++);
 
-	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHCubeMap.cso"), false);
-	m_shaders[CS_SH_CUBE_MAP] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
+	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSSHCubeMap.cso"), false);
+	m_shaders[CS_SH_CUBE_MAP] = m_shaderLib->GetShader(Shader::Stage::CS, csIndex++);
 
-	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHSum.cso"), false);
-	m_shaders[CS_SH_SUM] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
+	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSSHSum.cso"), false);
+	m_shaders[CS_SH_SUM] = m_shaderLib->GetShader(Shader::Stage::CS, csIndex++);
 
-	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSSHNormalize.cso"), false);
-	m_shaders[CS_SH_NORMALIZE] = m_shaderPool->GetShader(Shader::Stage::CS, csIndex++);
+	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSSHNormalize.cso"), false);
+	m_shaders[CS_SH_NORMALIZE] = m_shaderLib->GetShader(Shader::Stage::CS, csIndex++);
 
 	return true;
 }
