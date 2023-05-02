@@ -10,6 +10,7 @@
 //*********************************************************
 
 #include "SHIrradianceEZ.h"
+#include "stb_image_write.h"
 
 using namespace std;
 using namespace XUSG;
@@ -18,7 +19,7 @@ const float g_FOVAngleY = XM_PIDIV4;
 const float g_zNear = 1.0f;
 const float g_zFar = 1000.0f;
 
-const auto g_backFormat = Format::B8G8R8A8_UNORM;
+const auto g_backBufferFormat = Format::R8G8B8A8_UNORM;
 
 SHIrradianceEZ::SHIrradianceEZ(uint32_t width, uint32_t height, wstring name) :
 	DXFramework(width, height, name),
@@ -147,7 +148,7 @@ void SHIrradianceEZ::LoadAssets()
 
 		m_renderer = make_unique<Renderer>();
 		XUSG_N_RETURN(m_renderer->Init(pCommandList, m_descriptorTableLib, uploaders,
-			m_meshFileName.c_str(), Format::B8G8R8A8_UNORM, m_meshPosScale), ThrowIfFailed(E_FAIL));
+			m_meshFileName.c_str(), g_backBufferFormat, m_meshPosScale), ThrowIfFailed(E_FAIL));
 	}
 
 	{
@@ -206,7 +207,7 @@ void SHIrradianceEZ::CreateSwapchain()
 	// Describe and create the swap chain.
 	m_swapChain = SwapChain::MakeUnique();
 	XUSG_N_RETURN(m_swapChain->Create(m_factory.get(), Win32Application::GetHwnd(), m_commandQueue->GetHandle(),
-		FrameCount, m_width, m_height, g_backFormat, SwapChainFlag::ALLOW_TEARING), ThrowIfFailed(E_FAIL));
+		FrameCount, m_width, m_height, g_backBufferFormat, SwapChainFlag::ALLOW_TEARING), ThrowIfFailed(E_FAIL));
 
 	// This class does not support exclusive full-screen mode and prevents DXGI from responding to the ALT+ENTER shortcut.
 	ThrowIfFailed(m_factory->MakeWindowAssociation(Win32Application::GetHwnd(), DXGI_MWA_NO_ALT_ENTER));
@@ -312,7 +313,7 @@ void SHIrradianceEZ::OnWindowSizeChanged(int width, int height)
 	{
 		// If the swap chain already exists, resize it.
 		const auto hr = m_swapChain->ResizeBuffers(FrameCount, m_width,
-			m_height, g_backFormat, SwapChainFlag::ALLOW_TEARING);
+			m_height, g_backBufferFormat, SwapChainFlag::ALLOW_TEARING);
 
 		if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
 		{
@@ -359,6 +360,9 @@ void SHIrradianceEZ::OnKeyUp(uint8_t key)
 		break;
 	case VK_F1:
 		m_showFPS = !m_showFPS;
+		break;
+	case VK_F11:
+		m_screenShot = 1;
 		break;
 	case 'X':
 		m_useEZ = !m_useEZ;
@@ -468,7 +472,7 @@ void SHIrradianceEZ::PopulateCommandList()
 	const auto pCommandAllocator = m_commandAllocators[m_frameIndex].get();
 	XUSG_N_RETURN(pCommandAllocator->Reset(), ThrowIfFailed(E_FAIL));
 
-	const auto renderTarget = m_renderTargets[m_frameIndex].get();
+	const auto pRenderTarget = m_renderTargets[m_frameIndex].get();
 	if (m_useEZ)
 	{
 		// However, when ExecuteCommandList() is called on a particular command 
@@ -481,9 +485,17 @@ void SHIrradianceEZ::PopulateCommandList()
 		m_lightProbeEZ->Process(pCommandList, m_frameIndex);
 		m_rendererEZ->SetLightProbesSH(m_lightProbeEZ->GetSH());
 		m_rendererEZ->Render(pCommandList, m_frameIndex);
-		m_rendererEZ->Postprocess(pCommandList, renderTarget);
+		m_rendererEZ->Postprocess(pCommandList, pRenderTarget);
 
-		XUSG_N_RETURN(pCommandList->Close(renderTarget), ThrowIfFailed(E_FAIL));
+		// Screen-shot helper
+		if (m_screenShot == 1)
+		{
+			if (!m_readBuffer) m_readBuffer = Buffer::MakeUnique();
+			pRenderTarget->ReadBack(pCommandList->AsCommandList(), m_readBuffer.get(), &m_rowPitch);
+			m_screenShot = 2;
+		}
+
+		XUSG_N_RETURN(pCommandList->Close(pRenderTarget), ThrowIfFailed(E_FAIL));
 	}
 	else
 	{
@@ -508,17 +520,25 @@ void SHIrradianceEZ::PopulateCommandList()
 		ResourceBarrier barriers[5];
 		const auto dstState = ResourceState::NON_PIXEL_SHADER_RESOURCE | ResourceState::PIXEL_SHADER_RESOURCE;
 		auto numBarriers = 0u;
-		numBarriers = renderTarget->SetBarrier(barriers, ResourceState::RENDER_TARGET,
+		numBarriers = pRenderTarget->SetBarrier(barriers, ResourceState::RENDER_TARGET,
 			numBarriers, XUSG_BARRIER_ALL_SUBRESOURCES, BarrierFlag::BEGIN_ONLY);
 		m_renderer->Render(pCommandList, m_frameIndex, barriers, numBarriers);
 
-		numBarriers = renderTarget->SetBarrier(barriers, ResourceState::RENDER_TARGET,
+		numBarriers = pRenderTarget->SetBarrier(barriers, ResourceState::RENDER_TARGET,
 			0, XUSG_BARRIER_ALL_SUBRESOURCES, BarrierFlag::END_ONLY);
-		m_renderer->Postprocess(pCommandList, renderTarget->GetRTV(), numBarriers, barriers);
+		m_renderer->Postprocess(pCommandList, pRenderTarget->GetRTV(), numBarriers, barriers);
 
 		// Indicate that the back buffer will now be used to present.
-		numBarriers = renderTarget->SetBarrier(barriers, ResourceState::PRESENT);
+		numBarriers = pRenderTarget->SetBarrier(barriers, ResourceState::PRESENT);
 		pCommandList->Barrier(numBarriers, barriers);
+
+		// Screen-shot helper
+		if (m_screenShot == 1)
+		{
+			if (!m_readBuffer) m_readBuffer = Buffer::MakeUnique();
+			pRenderTarget->ReadBack(pCommandList, m_readBuffer.get(), &m_rowPitch);
+			m_screenShot = 2;
+		}
 
 		XUSG_N_RETURN(pCommandList->Close(), ThrowIfFailed(E_FAIL));
 	}
@@ -557,6 +577,43 @@ void SHIrradianceEZ::MoveToNextFrame()
 
 	// Set the fence value for the next frame.
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
+
+	// Screen-shot helper
+	if (m_screenShot)
+	{
+		if (m_screenShot > FrameCount)
+		{
+			char timeStr[15];
+			tm dateTime;
+			const auto now = time(nullptr);
+			if (!localtime_s(&dateTime, &now) && strftime(timeStr, sizeof(timeStr), "%Y%m%d%H%M%S", &dateTime))
+				SaveImage((string("SHIrradianceEZ_") + timeStr + ".png").c_str(), m_readBuffer.get(), m_width, m_height, m_rowPitch);
+			m_screenShot = 0;
+		}
+		else ++m_screenShot;
+	}
+}
+
+void SHIrradianceEZ::SaveImage(char const* fileName, Buffer* imageBuffer, uint32_t w, uint32_t h, uint32_t rowPitch, uint8_t comp)
+{
+	assert(comp == 3 || comp == 4);
+	const auto pData = static_cast<uint8_t*>(imageBuffer->Map(nullptr));
+
+	//stbi_write_png_compression_level = 1024;
+	vector<uint8_t> imageData(comp * w * h);
+	const auto sw = rowPitch / 4;
+	for (auto i = 0u; i < h; ++i)
+		for (auto j = 0u; j < w; ++j)
+		{
+			const auto s = sw * i + j;
+			const auto d = w * i + j;
+			for (uint8_t k = 0; k < comp; ++k)
+				imageData[comp * d + k] = pData[4 * s + k];
+		}
+
+	stbi_write_png(fileName, w, h, comp, imageData.data(), 0);
+
+	m_readBuffer->Unmap();
 }
 
 double SHIrradianceEZ::CalculateFrameStats(float* pTimeStep)
@@ -583,8 +640,9 @@ double SHIrradianceEZ::CalculateFrameStats(float* pTimeStep)
 		else windowText << L"[F1]";
 
 		windowText << L"    [X] " << (m_useEZ ? "XUSG-EZ" : "XUSGCore");
-
 		windowText << L"    [G] Glossy " << m_glossy;
+		windowText << L"    [F11] screen shot";
+
 		SetCustomWindowText(windowText.str().c_str());
 	}
 
