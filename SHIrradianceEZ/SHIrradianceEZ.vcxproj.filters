@@ -31,9 +31,6 @@
     <Filter Include="XUSG\Optional">
       <UniqueIdentifier>{91cfda93-cfa6-4ae9-a9f5-a280770eb7dd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shaders\SHMath">
-      <UniqueIdentifier>{8563cf6d-471d-4d1c-a13a-e2b1ac3913b6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="XUSG\Shaders">
       <UniqueIdentifier>{6892358b-808c-4a46-a491-14e53fb654c2}</UniqueIdentifier>
     </Filter>
@@ -88,9 +85,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Common\d3dcommon.h">
-      <Filter>Common\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Common\dxgicommon.h">
       <Filter>Common\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Common\dxgiformat.h">
