@@ -277,8 +277,8 @@ void LightProbe::generateRadiance(CommandList* pCommandList, uint8_t frameIndex)
 	pCommandList->SetComputePipelineLayout(m_pipelineLayouts[RADIANCE_GEN]);
 	pCommandList->SetComputeRootConstantBufferView(1, m_cbPerFrame.get(), m_cbPerFrame->GetCBVOffset(frameIndex));
 
-	m_radiance->AsTexture()->Blit(pCommandList, 8, 8, 1, m_uavTable, 2, 0,
-		m_srvTables[SRV_TABLE_INPUT][m_inputProbeIdx], 3, m_samplerTable, 0, m_pipelines[RADIANCE_GEN]);
+	m_radiance->Blit(pCommandList, 8, 8, 1, m_uavTable, 2, 0, m_srvTables[SRV_TABLE_INPUT][m_inputProbeIdx],
+		3, m_samplerTable, 0, m_pipelines[RADIANCE_GEN]);
 }
 
 void LightProbe::shCubeMap(CommandList* pCommandList, uint8_t order)
