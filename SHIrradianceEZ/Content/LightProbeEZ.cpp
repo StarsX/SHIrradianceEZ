@@ -76,35 +76,6 @@ bool LightProbeEZ::Init(CommandList* pCommandList, vector<Resource::uptr>& uploa
 	XUSG_N_RETURN(m_cbPerFrame->Create(pDevice, sizeof(float[FrameCount]), FrameCount,
 		nullptr, MemoryType::UPLOAD, MemoryFlag::NONE, L"CBPerFrame"), false);
 
-	{
-		m_cbCubeMapSlices = ConstantBuffer::MakeUnique();
-		XUSG_N_RETURN(m_cbCubeMapSlices->Create(pDevice, sizeof(uint32_t[6]), 6, nullptr,
-			MemoryType::UPLOAD, MemoryFlag::NONE, L"Slices"), false);
-		
-		for (uint8_t i = 0; i < 6; ++i)
-			*reinterpret_cast<uint32_t*>(m_cbCubeMapSlices->Map(i)) = i;
-	}
-
-	{
-		m_cbSHCubeMap = ConstantBuffer::MakeUnique();
-		XUSG_N_RETURN(m_cbSHCubeMap->Create(pDevice, sizeof(uint32_t[2]), 1, nullptr,
-			MemoryType::UPLOAD, MemoryFlag::NONE, L"CBSHCubeMap"), false);
-
-		reinterpret_cast<uint32_t*>(m_cbSHCubeMap->Map())[1] = SH_TEX_SIZE;
-	}
-
-	{
-		auto loopCount = 0u;
-		for (auto n = XUSG_DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = XUSG_DIV_UP(n, SH_GROUP_SIZE)) ++loopCount;
-		m_cbSHSums = ConstantBuffer::MakeUnique();
-		XUSG_N_RETURN(m_cbSHSums->Create(pDevice, sizeof(uint32_t[2]) * loopCount, loopCount,
-			nullptr, MemoryType::UPLOAD, MemoryFlag::NONE, L"CBSHSums"), false);
-
-		loopCount = 0;
-		for (auto n = XUSG_DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = XUSG_DIV_UP(n, SH_GROUP_SIZE))
-			reinterpret_cast<uint32_t*>(m_cbSHSums->Map(loopCount++))[1] = n;
-	}
-
 	// Create shaders
 	XUSG_N_RETURN(createShaders(), false);
 
@@ -208,11 +179,10 @@ void LightProbeEZ::shCubeMap(EZ::CommandList* pCommandList, uint8_t order)
 	};
 	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::UAV, 0, static_cast<uint32_t>(size(uavs)), uavs);
 
-	// Set CBV
+	// Set constants
 	assert(order <= SH_MAX_ORDER);
-	*reinterpret_cast<uint32_t*>(m_cbSHCubeMap->Map()) = order;
-	const auto cbv = EZ::GetCBV(m_cbSHCubeMap.get());
-	pCommandList->SetResources(Shader::Stage::CS, DescriptorType::CBV, 0, 1, &cbv);
+	pCommandList->SetCompute32BitConstant(order);
+	pCommandList->SetCompute32BitConstant(SH_TEX_SIZE, XUSG_UINT32_SIZE_OF(order));
 
 	// Set SRV
 	const auto srv = EZ::GetSRV(m_radiance.get());
@@ -231,6 +201,7 @@ void LightProbeEZ::shSum(EZ::CommandList* pCommandList, uint8_t order, uint8_t f
 
 	// Set pipeline state
 	pCommandList->SetComputeShader(m_shaders[CS_SH_SUM]);
+	pCommandList->SetCompute32BitConstant(order);
 
 	auto i = 0u;
 	for (auto n = XUSG_DIV_UP(m_numSHTexels, SH_GROUP_SIZE); n > 1; n = XUSG_DIV_UP(n, SH_GROUP_SIZE))
@@ -255,10 +226,8 @@ void LightProbeEZ::shSum(EZ::CommandList* pCommandList, uint8_t order, uint8_t f
 		};
 		pCommandList->SetResources(Shader::Stage::CS, DescriptorType::SRV, 0, static_cast<uint32_t>(size(srvs)), srvs);
 
-		// Set CBV
-		*reinterpret_cast<uint32_t*>(m_cbSHSums->Map(i++)) = order;
-		const auto cbv = EZ::GetCBV(m_cbSHSums.get());
-		pCommandList->SetResources(Shader::Stage::CS, DescriptorType::CBV, 0, 1, &cbv);
+		// Set constant
+		pCommandList->SetCompute32BitConstant(n, XUSG_UINT32_SIZE_OF(order));
 
 		pCommandList->Dispatch(XUSG_DIV_UP(n, SH_GROUP_SIZE), order * order, 1);
 		m_shBufferParity = !m_shBufferParity;

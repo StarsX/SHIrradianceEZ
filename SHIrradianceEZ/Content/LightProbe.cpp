@@ -130,7 +130,7 @@ bool LightProbe::createPipelineLayouts()
 	{
 		const auto utilPipelineLayout = Util::PipelineLayout::MakeUnique();
 		utilPipelineLayout->SetRange(0, DescriptorType::SAMPLER, 1, 0);
-		utilPipelineLayout->SetRootCBV(1, 0);
+		utilPipelineLayout->SetRootCBV(1, 1);
 		utilPipelineLayout->SetRange(2, DescriptorType::UAV, 1, 0, 0, DescriptorFlag::DATA_STATIC_WHILE_SET_AT_EXECUTE);
 		utilPipelineLayout->SetRange(3, DescriptorType::SRV, 2, 0);
 		XUSG_X_RETURN(m_pipelineLayouts[RADIANCE_GEN], utilPipelineLayout->GetPipelineLayout(

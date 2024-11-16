@@ -137,9 +137,12 @@ void SHIrradianceEZ::LoadAssets()
 	XUSG_N_RETURN(pCommandList->Create(m_device.get(), 0, CommandListType::DIRECT,
 		m_commandAllocators[m_frameIndex].get(), nullptr), ThrowIfFailed(E_FAIL));
 
+	uint32_t max32BitConstants[Shader::Stage::NUM_STAGE] = {};
 	m_commandListEZ = EZ::CommandList::MakeUnique();
-	XUSG_N_RETURN(m_commandListEZ->Create(pCommandList, 3, 64),
-		ThrowIfFailed(E_FAIL));
+	max32BitConstants[Shader::Stage::CS] = XUSG_UINT32_SIZE_OF(uint32_t[2]);
+	XUSG_N_RETURN(m_commandListEZ->Create(pCommandList, 3, 64,
+		nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+		max32BitConstants), ThrowIfFailed(E_FAIL));
 
 	vector<Resource::uptr> uploaders(0);	
 	{

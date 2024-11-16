@@ -52,9 +52,6 @@ protected:
 	XUSG::StructuredBuffer::uptr m_weightSH[2];
 
 	XUSG::ConstantBuffer::uptr m_cbPerFrame;
-	XUSG::ConstantBuffer::uptr m_cbCubeMapSlices;
-	XUSG::ConstantBuffer::uptr m_cbSHCubeMap;
-	XUSG::ConstantBuffer::uptr m_cbSHSums;
 
 	uint32_t	m_inputProbeIdx;
 	uint32_t	m_numSHTexels;
